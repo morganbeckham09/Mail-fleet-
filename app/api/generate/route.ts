@@ -11,18 +11,10 @@ export async function GET() {
 
     console.log("Mail.tm status:", response.status);
     console.log("Mail.tm response:", text);
-
-    if (!response.ok) {
-      return Response.json(
-        {
-          error: "Mail.tm API failed",
-          status: response.status,
-          details: text,
-        },
-        { status: 500 }
-      );
-    }
-
+return Response.json({
+  status: response.status,
+  response: text,
+});
     const match = text.match(/<domain>(.*?)<\/domain>/);
 
     if (!match) {
