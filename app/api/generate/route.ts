@@ -2,6 +2,9 @@ export async function GET() {
   try {
     const response = await fetch("https://api.mail.tm/domains", {
       cache: "no-store",
+      headers: {
+        Accept: "application/json",
+      },
     });
 
     const text = await response.text();
@@ -20,19 +23,16 @@ export async function GET() {
       );
     }
 
-  const match = text.match(/<domain>(.*?)<\/domain>/);
+    const match = text.match(/<domain>(.*?)<\/domain>/);
 
-if (!match) {
-  return Response.json(
-    { error: "No domain found", response: text },
-    { status: 500 }
-  );
-}
-
-const domain = match[1];
-
-    
+    if (!match) {
+      return Response.json(
+        { error: "No domain found", response: text },
+        { status: 500 }
+      );
     }
+
+    const domain = match[1];
 
     const username =
       "mail" + Math.random().toString(36).substring(2, 10);
