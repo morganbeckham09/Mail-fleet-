@@ -1,3 +1,36 @@
+function cleanMessageText(text: string) {
+  if (!text) return "";
+
+  let cleaned = text
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .trim();
+
+  // Remove repeated separator lines
+  cleaned = cleaned.replace(
+    /^={10,}\s*/gm,
+    ""
+  );
+
+  cleaned = cleaned.replace(
+    /\s*={10,}\s*$/gm,
+    ""
+  );
+
+  // Remove duplicated confirmation-code notice
+  const codeNotice =
+    /^\s*\d{5}Don't share this code with anyone\.\s*/i;
+
+  cleaned = cleaned.replace(codeNotice, "");
+
+  // Remove the same notice if repeated at the end
+  cleaned = cleaned.replace(
+    /\s*\d{5}Don't share this code with anyone\.\s*$/i,
+    ""
+  );
+
+  return cleaned.trim();
+}
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -177,10 +210,11 @@ export async function POST(request: Request) {
         intro:
           message.intro || "",
 
-        text:
-          message.text ||
-          message.intro ||
-          "",
+        text: cleanMessageText(
+  message.text ||
+    message.intro ||
+    ""
+),
 
         createdAt:
           message.createdAt || "",
