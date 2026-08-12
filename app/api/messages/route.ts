@@ -227,64 +227,56 @@ export async function POST(request: Request) {
 
           intro:
             message.intro || "",
+// ... API code above
 
-          text: cleanMessageText(
-            message.text ||
-              message.intro ||
-              ""
-          ),
 
-          createdAt:
-            message.createdAt || "",
+function cleanMessageText(text: string) {
+  let cleaned = text;
 
-          from: {
-            address:
-              message.from?.address ||
-              "",
+  // Remove "Don't share this code with anyone."
+  cleaned = cleaned.replace(
+    /Don't share this code with anyone\.?/gi,
+    ""
+  );
 
-            name:
-              message.from?.name ||
-              "",
-          },
-        })
-      );
+  // Remove "Here's your confirmation code:"
+  cleaned = cleaned.replace(
+    /Here's your confirmation code:\s*/gi,
+    ""
+  );
 
-    // Newest first
-    cleanedMessages.sort(
-      (a: any, b: any) => {
-        const dateA =
-          new Date(
-            a.createdAt || 0
-          ).getTime();
+  // Remove lines made only of "=" characters
+  cleaned = cleaned.replace(
+    /^=+\s*$/gm,
+    ""
+  );
 
-        const dateB =
-          new Date(
-            b.createdAt || 0
-          ).getTime();
+  // Remove repeated blank lines
+  cleaned = cleaned.replace(
+    /\n{3,}/g,
+    "\n\n"
+  );
 
-        return dateB - dateA;
-      }
-    );
-
-    return Response.json({
-      messages: cleanedMessages,
-    });
-  } catch (error) {
-    console.error(
-      "Messages error:",
-      error
-    );
-
-    return Response.json(
-      {
-        error:
-          "Failed to load inbox",
-        details:
-          error instanceof Error
-            ? error.message
-            : String(error),
-      },
-      { status: 500 }
-    );
-  }
+  return cleaned.trim();
 }
+// Clean messages
+const cleanedMessages =
+  detailedMessages.map(
+    (message: any) => ({
+      id: String(message.id),
+
+      subject:
+        message.subject || "",
+
+      intro:
+        message.intro || "",
+
+      text: cleanMessageText(
+        message.text ||
+        message.intro ||
+        ""
+      ),
+
+      // ...
+    })
+  );
