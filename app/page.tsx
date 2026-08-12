@@ -17,8 +17,11 @@ export default function Home() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to generate email");
-      }
+      throw new Error(
+  data.details
+    ? `${data.error}: ${data.details}`
+    : data.error || "Failed to generate email"
+);
 
       setEmail(data.email);
     } catch (error) {
