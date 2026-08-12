@@ -63,11 +63,36 @@ export async function GET() {
       console.log("Selected provider:", base);
       console.log("Selected domain:", domain);
 
-      const username =
-  "mail" +
-  crypto.randomUUID()
-    .replace(/-/g, "")
-    .substring(0, 12);
+      const names = [
+  "adams",
+  "james",
+  "john",
+  "david",
+  "michael",
+  "daniel",
+  "alex",
+  "samuel",
+  "charles",
+  "henry",
+  "thomas",
+  "william",
+  "joseph",
+  "emmanuel",
+  "andrew",
+  "christopher",
+  "benjamin",
+  "jacob",
+  "oliver",
+  "george",
+];
+
+const randomName =
+  names[Math.floor(Math.random() * names.length)];
+
+const randomNumber =
+  Math.floor(100 + Math.random() * 900);
+
+const username = `${randomName}${randomNumber}`;
 
 const password =
   "Temp" +
