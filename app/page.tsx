@@ -24,7 +24,31 @@ export default function Home() {
   const [generating, setGenerating] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [error, setError] = useState("");
+// Restore saved mailbox after page reload
+useEffect(() => {
+  try {
+    const savedMailbox = localStorage.getItem("tempmail_mailbox");
 
+    if (!savedMailbox) {
+      return;
+    }
+
+    const mailbox = JSON.parse(savedMailbox);
+
+    if (
+      mailbox.email &&
+      mailbox.password &&
+      mailbox.provider
+    ) {
+      setEmail(mailbox.email);
+      setPassword(mailbox.password);
+      setProvider(mailbox.provider);
+    }
+  } catch (error) {
+    console.error("Failed to restore mailbox:", error);
+    localStorage.removeItem("tempmail_mailbox");
+  }
+}, []);
   // Generate temporary email
   async function generateEmail() {
     try {
@@ -34,7 +58,6 @@ export default function Home() {
       setPassword("");
       setProvider("");
       setMessages([]);
-
       // IMPORTANT:
       // /api/generate uses GET, not POST
       const response = await fetch("/api/generate", {
@@ -54,7 +77,14 @@ export default function Home() {
 
       setEmail(data.email);
       setPassword(data.password);
-      setProvider(data.provider);
+      setProvider(data.provider); localStorage.setItem(
+  "tempmail_mailbox",
+  JSON.stringify({
+    email: data.email,
+    password: data.password,
+    provider: data.provider,
+  })
+);
     } catch (error) {
       console.error("Generate error:", error);
 
