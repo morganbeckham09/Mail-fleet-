@@ -216,20 +216,6 @@ export async function POST(request: Request) {
         )
       );
 
-    // Clean messages
-    const cleanedMessages =
-      detailedMessages.map(
-        (message: any) => ({
-          id: String(message.id),
-
-          subject:
-            message.subject || "",
-
-          intro:
-            message.intro || "",
-// ... API code above
-
-
 function cleanMessageText(text: string) {
   let cleaned = text;
 
