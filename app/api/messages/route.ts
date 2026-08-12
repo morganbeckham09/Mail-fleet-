@@ -67,6 +67,8 @@ export async function POST(request: Request) {
       );
     }
 
+    console.log("Authentication successful");
+
     // Get inbox messages
     const messagesResponse = await fetch(
       `${provider}/messages?page=1`,
@@ -75,8 +77,7 @@ export async function POST(request: Request) {
         cache: "no-store",
         headers: {
           Accept: "application/json",
-          Authorization: `Bearer $
-            {tokenData.token}`,
+          Authorization: `Bearer ${tokenData.token}`,
         },
       }
     );
@@ -107,9 +108,18 @@ export async function POST(request: Request) {
     const messagesData =
       JSON.parse(messagesText);
 
+    const messages =
+      Array.isArray(messagesData)
+        ? messagesData
+        : messagesData["hydra:member"] || [];
+
+    console.log(
+      "Parsed messages:",
+      messages
+    );
+
     return Response.json({
-      messages:
-        messagesData["hydra:member"] || [],
+      messages,
     });
   } catch (error) {
     console.error(
