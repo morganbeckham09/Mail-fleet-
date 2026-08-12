@@ -70,6 +70,9 @@ setMailboxes(mailboxes);
       setPassword(mailbox.password);
       setProvider(mailbox.provider);
     }
+  setEmail(mailbox.email);
+setPassword(mailbox.password);
+setProvider(mailbox.provider);
   } catch (error) {
     console.error(
       "Failed to restore mailboxes:",
