@@ -128,22 +128,23 @@ export async function POST(request: Request) {
     const messages =
       Array.isArray(messagesData)
         ? messagesData
-        : messagesData[
-            "hydra:member"
-          ] || [];
-    // Clean and normalize messages before sending them
-    // to the frontend.
+        : messagesData["hydra:member"] || [];
+
+    console.log(
+      "Parsed messages:",
+      messages
+    );
+
+    // Clean and normalize messages
     const cleanedMessages = messages.map(
       (message: any) => {
         let intro = message.intro || "";
         let text = message.text || "";
 
-        const subject = message.subject || "";
+        const subject =
+          message.subject || "";
 
-        // If the subject contains a confirmation code,
-        // remove that code from the beginning of the
-        // message preview/body when the provider has
-        // duplicated it there.
+        // Detect confirmation code in subject
         const codeMatch = subject.match(
           /^([A-Za-z0-9]{4,12})\s+is your confirmation code/i
         );
@@ -151,19 +152,25 @@ export async function POST(request: Request) {
         if (codeMatch) {
           const code = codeMatch[1];
 
-          // Remove code only when it appears directly
-          // at the beginning of the content.
+          // Remove the code from the beginning
+          // of the preview/body if duplicated there.
           const codePattern = new RegExp(
             `^${code}\\s*`,
             "i"
           );
 
-          intro = intro.replace(codePattern, "");
-          text = text.replace(codePattern, "");
+          intro = intro.replace(
+            codePattern,
+            ""
+          );
+
+          text = text.replace(
+            codePattern,
+            ""
+          );
         }
 
-        // Clean excessive whitespace while preserving
-        // the original full message formatting.
+        // Clean preview whitespace
         intro = intro
           .replace(/\s+/g, " ")
           .trim();
@@ -189,3 +196,22 @@ export async function POST(request: Request) {
     return Response.json({
       messages: cleanedMessages,
     });
+  } catch (error) {
+    console.error(
+      "Messages error:",
+      error
+    );
+
+    return Response.json(
+      {
+        error:
+          "Failed to load inbox",
+        details:
+          error instanceof Error
+            ? error.message
+            : String(error),
+      },
+      { status: 500 }
+    );
+  }
+}
