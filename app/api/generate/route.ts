@@ -1,70 +1,63 @@
 export async function GET() {
   try {
-    // Get available Mail.tm domains
-    const domainResponse = await fetch("https://api.mail.tm/domains", {
-      cache: "no-store",
-      headers: {
-        Accept: "application/json",
-      },
-    });
+    // Get available Mail.tm domains with retry
+let domainResponse;
+let domainText = "";
+let lastStatus = 0;
 
-    const domainText = await domainResponse.text();
-
-    console.log("Mail.tm domain status:", domainResponse.status);
-    console.log("Mail.tm domain response:", domainText);
-
-    if (!domainResponse.ok) {
-      return Response.json(
-        {
-          error: "Mail.tm domains request failed",
-          status: domainResponse.status,
-          details: domainText,
+for (let attempt = 1; attempt <= 3; attempt++) {
+  try {
+    domainResponse = await fetch(
+      "https://api.mail.tm/domains?page=1",
+      {
+        cache: "no-store",
+        headers: {
+          Accept: "application/json",
         },
-        { status: domainResponse.status }
-      );
+      }
+    );
+
+    domainText = await domainResponse.text();
+    lastStatus = domainResponse.status;
+
+    console.log(
+      `Mail.tm domain attempt ${attempt}:`,
+      lastStatus,
+      domainText
+    );
+
+    if (domainResponse.ok) {
+      break;
     }
+  } catch (fetchError) {
+    console.error(
+      `Mail.tm domain attempt ${attempt} error:`,
+      fetchError
+    );
+  }
 
-    let domainData;
+  // Wait before retrying
+  if (attempt < 3) {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+}
 
-    try {
-      domainData = JSON.parse(domainText);
-    } catch {
-      return Response.json(
-        {
-          error: "Mail.tm returned invalid JSON",
-          details: domainText,
-        },
-        { status: 502 }
-      );
-    }
+// Mail.tm still failed after 3 attempts
+if (!domainResponse || !domainResponse.ok) {
+  return Response.json(
+    {
+      error: "Mail.tm domains service is temporarily unavailable",
+      status: lastStatus || 503,
+      details: domainText || "No response from Mail.tm",
+    },
+    { status: 503 }
+  );
+}
 
-    const domains = domainData?.["hydra:member"] ?? [];
+// Parse Mail.tm response
+let domainData;
 
-    if (!Array.isArray(domains) || domains.length === 0) {
-      return Response.json(
-        {
-          error: "No Mail.tm domains available",
-          details: domainData,
-        },
-        { status: 503 }
-      );
-    }
-
-    // Pick the first active domain
-    const activeDomain =
-      domains.find((item: any) => item?.isActive === true) ?? domains[0];
-
-    const domain = activeDomain?.domain;
-
-    if (!domain) {
-      return Response.json(
-        {
-          error: "Mail.tm returned a domain without a domain name",
-          details: activeDomain,
-        },
-        { status: 502 }
-      );
-    }
+try {
 
     // Generate username and password
     const username =
