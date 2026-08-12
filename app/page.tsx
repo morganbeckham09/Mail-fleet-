@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+
 export default function Home() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,11 +18,12 @@ export default function Home() {
       const data = await response.json();
 
       if (!response.ok) {
-      throw new Error(
-  data.details
-    ? `${data.error}: ${data.details}`
-    : data.error || "Failed to generate email"
-);
+        throw new Error(
+          data.details
+            ? `${data.error}: ${data.details}`
+            : data.error || "Failed to generate email"
+        );
+      }
 
       setEmail(data.email);
     } catch (error) {
@@ -67,7 +69,7 @@ export default function Home() {
         )}
 
         {error && (
-          <p className="mt-4 text-red-500">
+          <p className="mt-4 text-red-500 break-words">
             {error}
           </p>
         )}
