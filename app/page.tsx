@@ -40,7 +40,7 @@ useEffect(() => {
     useEffect(() => {
   localStorage.setItem("temp-mailboxes", JSON.stringify(mailboxes));
 }, [mailboxes]);
->([]);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedMessage, setSelectedMessage] =
     useState<Message | null>(null);
