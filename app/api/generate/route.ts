@@ -31,20 +31,7 @@ if (!match) {
 
 const domain = match[1];
 
-    if (!Array.isArray(domains) || domains.length === 0) {
-      return Response.json(
-        { error: "No Mail.tm domains available", data },
-        { status: 500 }
-      );
-    }
-
-    const domain = domains[0]?.domain;
-
-    if (!domain) {
-      return Response.json(
-        { error: "Mail.tm returned no domain" },
-        { status: 500 }
-      );
+    
     }
 
     const username =
