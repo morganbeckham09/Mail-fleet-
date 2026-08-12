@@ -57,7 +57,6 @@ if (!domainResponse || !domainResponse.ok) {
 // Parse Mail.tm response
 let domainData;
 
-try {
 
     // Generate username and password
     const username =
