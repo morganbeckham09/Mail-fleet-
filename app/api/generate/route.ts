@@ -1,16 +1,43 @@
 export async function GET() {
   try {
-    const response = await fetch("https://api.mail.tm/domains?page=1");
+    const response = await fetch("https://api.mail.tm/domains", {
+      cache: "no-store",
+    });
+
+    const text = await response.text();
+
+    console.log("Mail.tm status:", response.status);
+    console.log("Mail.tm response:", text);
 
     if (!response.ok) {
-      throw new Error("Could not fetch Mail.tm domains");
+      return Response.json(
+        {
+          error: "Mail.tm API failed",
+          status: response.status,
+          details: text,
+        },
+        { status: 500 }
+      );
     }
 
-    const data = await response.json();
-    const domain = data["hydra:member"]?.[0]?.domain;
+    const data = JSON.parse(text);
+
+    const domains = data?.["hydra:member"];
+
+    if (!Array.isArray(domains) || domains.length === 0) {
+      return Response.json(
+        { error: "No Mail.tm domains available", data },
+        { status: 500 }
+      );
+    }
+
+    const domain = domains[0]?.domain;
 
     if (!domain) {
-      throw new Error("No email domain available");
+      return Response.json(
+        { error: "Mail.tm returned no domain" },
+        { status: 500 }
+      );
     }
 
     const username =
@@ -20,8 +47,13 @@ export async function GET() {
 
     return Response.json({ email });
   } catch (error) {
+    console.error("Generate email error:", error);
+
     return Response.json(
-      { error: "Failed to generate email" },
+      {
+        error: "Failed to generate email",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
