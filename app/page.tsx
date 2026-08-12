@@ -100,7 +100,7 @@ setMailboxes(mailboxes);
   JSON.parse(
     localStorage.getItem("tempmail_mailboxes") || "[]"
   );
-
+setMailboxes(savedMailboxes);
 savedMailboxes.push({
   email: data.email,
   password: data.password,
