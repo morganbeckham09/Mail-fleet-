@@ -217,7 +217,26 @@ localStorage.setItem(
       .slice(0, 140);
   }
 
-  return (
+  return ( function deleteMailbox(index: number) {
+  const updatedMailboxes = mailboxes.filter(
+    (_, i) => i !== index
+  );
+
+  setMailboxes(updatedMailboxes);
+
+  localStorage.setItem(
+    "tempmail_mailboxes",
+    JSON.stringify(updatedMailboxes)
+  );
+
+  if (mailboxes[index]?.email === email) {
+    setEmail("");
+    setPassword("");
+    setProvider("");
+    setMessages([]);
+    setSelectedMessage(null);
+  }
+  }
     <main
       style={{
         minHeight: "100vh",
@@ -386,28 +405,6 @@ fontSize: "17px",
   marginBottom: "20px",
   background: "#fff",
 }}
-  >
-    <h2
-      style={{
-        margin: "0 0 14px",
-        fontSize: "21px",
-        fontWeight: "700"
-      }}
-    >
-      My Emails
-    </h2>
-
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "8px",
-      }}
-    >
-      {mailboxes.map((mailbox, index) => (
-        <button
-          key={`${mailbox.email}-${index}`}
-          onClick={() => {
             setEmail(mailbox.email);
             setPassword(mailbox.password);
             setProvider(mailbox.provider);
@@ -448,6 +445,8 @@ fontSize: "15px",
                   style={{
                     padding: "10px 18px",
 background: "#111",
+color: "#fff",
+border: "none",
 borderRadius: "10px",
 fontSize: "15px",
 fontWeight: "600",
@@ -493,24 +492,54 @@ fontWeight: "600",
               ) : (
                 /* Message list */
                 <div>
-                  {messages.map((message, index) => (
-                    <div
-                      key={message.id}
-                      onClick={() =>
-                        setSelectedMessage(message)
-                      }
-                      style={{
-                        padding: "18px",
-                        borderBottom:
-                          index === messages.length - 1
-                            ? "none"
-                            : "1px solid #eee",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {/* Subject */}
-                      <h3
-                        style={{
+                {mailboxes.map((mailbox, index) => (
+  <div
+    key={`${mailbox.email}-${index}`}
+    style={{
+      display: "flex",
+      gap: "8px",
+      alignItems: "stretch",
+    }}
+  >
+    <button
+      onClick={() => {
+        setEmail(mailbox.email);
+        setPassword(mailbox.password);
+        setProvider(mailbox.provider);
+        setMessages([]);
+        setSelectedMessage(null);
+      }}
+      style={{
+        flex: 1,
+        padding: "14px 16px",
+        background: "#fff",
+        color: "#111",
+        border: "1px solid #e5e5e5",
+        borderRadius: "10px",
+        fontSize: "15px",
+        wordBreak: "break-all",
+      }}
+    >
+      {mailbox.email}
+      {mailbox.email === email && " (Active)"}
+    </button>
+
+    <button
+      onClick={() => deleteMailbox(index)}
+      style={{
+        padding: "10px 14px",
+        background: "#fff",
+        color: "#d00",
+        border: "1px solid #ddd",
+        borderRadius: "10px",
+        fontSize: "14px",
+        flexShrink: 0,
+      }}
+    >
+      Delete
+    </button>
+  </div>
+))}
                           margin: "0 0 7px",
                           fontSize: "17px",
                           lineHeight: "1.4",
