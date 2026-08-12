@@ -59,27 +59,25 @@ useEffect(() => {
     }
 setMailboxes(mailboxes);
     const mailbox = mailboxes[mailboxes.length - 1];
-
-    if (
-      mailbox.email &&
-      mailbox.password &&
-      mailbox.provider
-    {
+if (
+  mailbox.email &&
+  mailbox.password &&
+  mailbox.provider
+) {
   setEmail(mailbox.email);
   setPassword(mailbox.password);
   setProvider(mailbox.provider);
+}
 } catch (error) {
   console.error(
     "Failed to restore mailboxes:",
     error
   );
-    console.error(
-      "Failed to restore mailboxes:",
-      error
-    );
 
-    localStorage.removeItem("tempmail_mailboxes");
-  }
+  localStorage.removeItem("tempmail_mailboxes");
+}
+}, []);
+  
 []);
 
   // Generate temporary email
