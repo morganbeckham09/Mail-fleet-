@@ -23,7 +23,20 @@ const [mailboxes, setMailboxes] = useState<
     email: string;
     password: string;
     provider: string;
-  }[]
+    useEffect(() => {
+  const saved = localStorage.getItem("temp-mailboxes");
+
+  if (saved) {
+    try {
+      setMailboxes(JSON.parse(saved));
+    } catch {
+      localStorage.removeItem("temp-mailboxes");
+    }
+  }
+}, []);
+    useEffect(() => {
+  localStorage.setItem("temp-mailboxes", JSON.stringify(mailboxes));
+}, [mailboxes]);
 >([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedMessage, setSelectedMessage] =
@@ -33,11 +46,7 @@ const [mailboxes, setMailboxes] = useState<
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [error, setError] = useState("");
 
-  // Restore saved mailbox after page reload
-useEffect(() => {
-  try {
-    const savedMailboxes =
-      localStorage.getItem("tempmail_mailboxes");
+  
 
     if (!savedMailboxes) return;
 
