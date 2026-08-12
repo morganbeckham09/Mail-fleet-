@@ -340,7 +340,7 @@ localStorage.setItem(
                 overflow: "hidden",
                 background: "#fff",
               }}
-            >
+              </div>
               {/* Inbox header */}
               <div
                 style={{
@@ -351,7 +351,65 @@ localStorage.setItem(
                   padding: "16px 18px",
                   borderBottom: "1px solid #eee",
                 }}
-              >
+              > {/* My Emails */}
+{mailboxes.length > 0 && (
+  <div
+    style={{
+      border: "1px solid #ddd",
+      borderRadius: "14px",
+      padding: "18px",
+      marginBottom: "20px",
+      background: "#fff",
+    }}
+  >
+    <h2
+      style={{
+        margin: "0 0 14px",
+        fontSize: "20px",
+      }}
+    >
+      My Emails
+    </h2>
+
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+      }}
+    >
+      {mailboxes.map((mailbox, index) => (
+        <button
+          key={`${mailbox.email}-${index}`}
+          onClick={() => {
+            setEmail(mailbox.email);
+            setPassword(mailbox.password);
+            setProvider(mailbox.provider);
+            setMessages([]);
+            setSelectedMessage(null);
+          }}
+          style={{
+            width: "100%",
+            padding: "12px 14px",
+            textAlign: "left",
+            background:
+              mailbox.email === email
+                ? "#f0f0f0"
+                : "#fff",
+            border: "1px solid #ddd",
+            borderRadius: "9px",
+            cursor: "pointer",
+            fontSize: "14px",
+            wordBreak: "break-all",
+          }}
+        >
+          {mailbox.email}
+          {mailbox.email === email && "  (Active)"}
+        </button>
+      ))}
+    </div>
+  </div>
+)}
                 <h2
                   style={{
                     margin: 0,
