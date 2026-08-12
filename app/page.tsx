@@ -28,29 +28,29 @@ export default function Home() {
   const [error, setError] = useState("");
 
   // Restore saved mailbox after page reload
-  useEffect(() => {
-    try {
-      const savedMailbox =
-        localStorage.getItem("tempmail_mailbox");
+useEffect(() => {
+  try {
+    const savedMailbox =
+      localStorage.getItem("tempmail_mailbox");
 
-      if (!savedMailbox) return;
+    if (!savedMailbox) return;
 
-      const mailbox = JSON.parse(savedMailbox);
+    const mailbox = JSON.parse(savedMailbox);
 
-      if (
-        mailbox.email &&
-        mailbox.password &&
-        mailbox.provider
-      ) {
-        setEmail(mailbox.email);
-        setPassword(mailbox.password);
-        setProvider(mailbox.provider);
-      }
-    } catch (error) {
-      console.error("Failed to restore mailbox:", error);
-      localStorage.removeItem("tempmail_mailbox");
+    if (
+      mailbox.email &&
+      mailbox.password &&
+      mailbox.provider
+    ) {
+      setEmail(mailbox.email);
+      setPassword(mailbox.password);
+      setProvider(mailbox.provider);
     }
-  }, []);
+  } catch (error) {
+    console.error("Failed to restore mailbox:", error);
+    localStorage.removeItem("tempmail_mailbox");
+  }
+}, []);
 
   // Generate temporary email
   async function generateEmail() {
@@ -80,14 +80,21 @@ export default function Home() {
       setPassword(data.password);
       setProvider(data.provider);
 
-      localStorage.setItem(
-        "tempmail_mailbox",
-        JSON.stringify({
-          email: data.email,
-          password: data.password,
-          provider: data.provider,
-        })
-      );
+      const savedMailboxes =
+  JSON.parse(
+    localStorage.getItem("tempmail_mailboxes") || "[]"
+  );
+
+savedMailboxes.push({
+  email: data.email,
+  password: data.password,
+  provider: data.provider,
+});
+
+localStorage.setItem(
+  "tempmail_mailboxes",
+  JSON.stringify(savedMailboxes)
+);
     } catch (error) {
       console.error("Generate error:", error);
 
