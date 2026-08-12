@@ -11,7 +11,8 @@ export async function POST(request: Request) {
     if (!email || !password || !provider) {
       return Response.json(
         {
-          error: "Email, password and provider are required",
+          error:
+            "Email, password and provider are required",
         },
         { status: 400 }
       );
@@ -34,7 +35,8 @@ export async function POST(request: Request) {
       }
     );
 
-    const tokenText = await tokenResponse.text();
+    const tokenText =
+      await tokenResponse.text();
 
     console.log(
       "Token status:",
@@ -49,38 +51,48 @@ export async function POST(request: Request) {
     if (!tokenResponse.ok) {
       return Response.json(
         {
-          error: "Failed to authenticate mailbox",
+          error:
+            "Failed to authenticate mailbox",
           details: tokenText,
         },
-        { status: tokenResponse.status }
+        {
+          status: tokenResponse.status,
+        }
       );
     }
 
-    const tokenData = JSON.parse(tokenText);
+    const tokenData =
+      JSON.parse(tokenText);
 
     if (!tokenData.token) {
       return Response.json(
         {
-          error: "No authentication token returned",
+          error:
+            "No authentication token returned",
         },
         { status: 500 }
       );
     }
 
-    console.log("Authentication successful");
+    console.log(
+      "Authentication successful"
+    );
 
     // Get inbox messages
-    const messagesResponse = await fetch(
-      `${provider}/messages?page=1`,
-      {
-        method: "GET",
-        cache: "no-store",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${tokenData.token}`,
-        },
-      }
-    );
+    const messagesResponse =
+      await fetch(
+        `${provider}/messages?page=1`,
+        {
+          method: "GET",
+          cache: "no-store",
+          headers: {
+            Accept:
+              "application/json",
+            Authorization:
+              `Bearer ${tokenData.token}`,
+          },
+        }
+      );
 
     const messagesText =
       await messagesResponse.text();
@@ -98,10 +110,15 @@ export async function POST(request: Request) {
     if (!messagesResponse.ok) {
       return Response.json(
         {
-          error: "Failed to fetch messages",
-          details: messagesText,
+          error:
+            "Failed to fetch messages",
+          details:
+            messagesText,
         },
-        { status: messagesResponse.status }
+        {
+          status:
+            messagesResponse.status,
+        }
       );
     }
 
@@ -111,7 +128,9 @@ export async function POST(request: Request) {
     const messages =
       Array.isArray(messagesData)
         ? messagesData
-        : messagesData["hydra:member"] || [];
+        : messagesData[
+            "hydra:member"
+          ] || [];
 
     console.log(
       "Parsed messages:",
@@ -121,6 +140,7 @@ export async function POST(request: Request) {
     return Response.json({
       messages,
     });
+
   } catch (error) {
     console.error(
       "Messages error:",
@@ -129,7 +149,8 @@ export async function POST(request: Request) {
 
     return Response.json(
       {
-        error: "Failed to load inbox",
+        error:
+          "Failed to load inbox",
         details:
           error instanceof Error
             ? error.message
