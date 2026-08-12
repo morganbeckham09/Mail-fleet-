@@ -38,7 +38,7 @@ useEffect(() => {
   }
 }, []);
     useEffect(() => {
-  localStorage.setItem("temp-mailboxes", JSON.stringify(mailboxes));
+  localStorage.setItem("tempmail-mailboxes", JSON.stringify(mailboxes));
 }, [mailboxes]);
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -451,7 +451,7 @@ background: "#111",
 borderRadius: "10px",
 fontSize: "15px",
 fontWeight: "600",
-                    cursor: loadingMessage ? 
+                    cursor: loadingMessages ? 
                    "not-allowed"   : "pointer",
                     opacity: loadingMessages ? 0.6 : 1,
                   }}
