@@ -20,36 +20,38 @@ export default function Home() {
   const [provider, setProvider] = useState("");
 
   const [messages, setMessages] = useState<Message[]>([]);
-const [selectedMessage, setSelectedMessage] =
-  useState<Message | null>(null);
+  const [selectedMessage, setSelectedMessage] =
+    useState<Message | null>(null);
+
   const [generating, setGenerating] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [error, setError] = useState("");
-// Restore saved mailbox after page reload
-useEffect(() => {
-  try {
-    const savedMailbox = localStorage.getItem("tempmail_mailbox");
 
-    if (!savedMailbox) {
-      return;
+  // Restore saved mailbox after page reload
+  useEffect(() => {
+    try {
+      const savedMailbox =
+        localStorage.getItem("tempmail_mailbox");
+
+      if (!savedMailbox) return;
+
+      const mailbox = JSON.parse(savedMailbox);
+
+      if (
+        mailbox.email &&
+        mailbox.password &&
+        mailbox.provider
+      ) {
+        setEmail(mailbox.email);
+        setPassword(mailbox.password);
+        setProvider(mailbox.provider);
+      }
+    } catch (error) {
+      console.error("Failed to restore mailbox:", error);
+      localStorage.removeItem("tempmail_mailbox");
     }
+  }, []);
 
-    const mailbox = JSON.parse(savedMailbox);
-
-    if (
-      mailbox.email &&
-      mailbox.password &&
-      mailbox.provider
-    ) {
-      setEmail(mailbox.email);
-      setPassword(mailbox.password);
-      setProvider(mailbox.provider);
-    }
-  } catch (error) {
-    console.error("Failed to restore mailbox:", error);
-    localStorage.removeItem("tempmail_mailbox");
-  }
-}, []);
   // Generate temporary email
   async function generateEmail() {
     try {
@@ -59,8 +61,8 @@ useEffect(() => {
       setPassword("");
       setProvider("");
       setMessages([]);
-      // IMPORTANT:
-      // /api/generate uses GET, not POST
+      setSelectedMessage(null);
+
       const response = await fetch("/api/generate", {
         method: "GET",
         cache: "no-store",
@@ -74,18 +76,18 @@ useEffect(() => {
         );
       }
 
-      console.log("Generated mailbox:", data);
-
       setEmail(data.email);
       setPassword(data.password);
-      setProvider(data.provider); localStorage.setItem(
-  "tempmail_mailbox",
-  JSON.stringify({
-    email: data.email,
-    password: data.password,
-    provider: data.provider,
-  })
-);
+      setProvider(data.provider);
+
+      localStorage.setItem(
+        "tempmail_mailbox",
+        JSON.stringify({
+          email: data.email,
+          password: data.password,
+          provider: data.provider,
+        })
+      );
     } catch (error) {
       console.error("Generate error:", error);
 
@@ -101,9 +103,7 @@ useEffect(() => {
 
   // Load inbox messages
   async function loadMessages() {
-    if (!email || !password || !provider) {
-      return;
-    }
+    if (!email || !password || !provider) return;
 
     try {
       setLoadingMessages(true);
@@ -146,9 +146,7 @@ useEffect(() => {
 
   // Automatically refresh inbox every 5 seconds
   useEffect(() => {
-    if (!email || !password || !provider) {
-      return;
-    }
+    if (!email || !password || !provider) return;
 
     loadMessages();
 
@@ -156,17 +154,28 @@ useEffect(() => {
       loadMessages();
     }, 5000);
 
-    return () => {
-      clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, [email, password, provider]);
+
+  // Create a short, clean preview
+  function getPreview(message: Message) {
+    const preview =
+      message.intro ||
+      message.text ||
+      "No preview available.";
+
+    return preview
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 140);
+  }
 
   return (
     <main
       style={{
         minHeight: "100vh",
         background: "#ffffff",
-        padding: "60px 20px",
+        padding: "40px 16px",
         fontFamily: "Arial, sans-serif",
       }}
     >
@@ -176,11 +185,12 @@ useEffect(() => {
           margin: "0 auto",
         }}
       >
+        {/* Header */}
         <h1
           style={{
             textAlign: "center",
-            fontSize: "48px",
-            marginBottom: "10px",
+            fontSize: "clamp(36px, 8vw, 48px)",
+            margin: "10px 0",
           }}
         >
           TempMail
@@ -190,25 +200,28 @@ useEffect(() => {
           style={{
             textAlign: "center",
             color: "#666",
-            fontSize: "20px",
-            marginBottom: "35px",
+            fontSize: "18px",
+            lineHeight: "1.5",
+            marginBottom: "30px",
           }}
         >
           Create a temporary email address instantly.
         </p>
 
+        {/* Generate button */}
         <button
           onClick={generateEmail}
           disabled={generating}
           style={{
             display: "block",
-            margin: "0 auto 30px",
-            padding: "16px 35px",
+            margin: "0 auto 25px",
+            padding: "14px 28px",
             background: "#000",
             color: "#fff",
             border: "none",
             borderRadius: "10px",
-            fontSize: "18px",
+            fontSize: "17px",
+            fontWeight: "600",
             cursor: generating
               ? "not-allowed"
               : "pointer",
@@ -220,15 +233,18 @@ useEffect(() => {
             : "Generate Email"}
         </button>
 
+        {/* Error */}
         {error && (
           <div
             style={{
-              padding: "15px",
+              padding: "14px 16px",
               marginBottom: "20px",
-              background: "#ffe5e5",
+              background: "#fff0f0",
               color: "#b00020",
-              borderRadius: "8px",
+              border: "1px solid #ffd0d0",
+              borderRadius: "10px",
               textAlign: "center",
+              lineHeight: "1.4",
             }}
           >
             {error}
@@ -237,53 +253,56 @@ useEffect(() => {
 
         {email && (
           <>
-            {/* Email address */}
+            {/* Email address card */}
             <div
               style={{
-                border: "1px solid #222",
-                borderRadius: "10px",
-                padding: "25px",
+                border: "1px solid #ddd",
+                borderRadius: "14px",
+                padding: "22px 18px",
                 textAlign: "center",
-                marginBottom: "25px",
+                marginBottom: "20px",
               }}
             >
               <p
                 style={{
                   color: "#777",
-                  fontSize: "18px",
-                  marginBottom: "10px",
+                  fontSize: "15px",
+                  margin: "0 0 8px",
                 }}
               >
-                Your temporary email:
+                Your temporary email
               </p>
 
               <strong
                 style={{
-                  fontSize: "22px",
+                  display: "block",
+                  fontSize: "20px",
+                  lineHeight: "1.4",
                   wordBreak: "break-all",
                 }}
               >
                 {email}
               </strong>
 
-              <br />
-
               <button
                 onClick={async () => {
-  try {
-    await navigator.clipboard.writeText(email);
-    alert("Email copied!");
-  } catch {
-    alert("Copy failed. Please copy the email manually.");
-  }
-}}
+                  try {
+                    await navigator.clipboard.writeText(email);
+                    alert("Email copied!");
+                  } catch {
+                    alert(
+                      "Copy failed. Please copy the email manually."
+                    );
+                  }
+                }}
                 style={{
-                  marginTop: "15px",
+                  marginTop: "14px",
                   padding: "9px 18px",
                   background: "#fff",
                   border: "1px solid #ccc",
-                  borderRadius: "6px",
+                  borderRadius: "8px",
                   cursor: "pointer",
+                  fontSize: "14px",
                 }}
               >
                 Copy
@@ -294,22 +313,26 @@ useEffect(() => {
             <div
               style={{
                 border: "1px solid #ddd",
-                borderRadius: "10px",
-                padding: "20px",
+                borderRadius: "14px",
+                overflow: "hidden",
+                background: "#fff",
               }}
             >
+              {/* Inbox header */}
               <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  marginBottom: "20px",
+                  gap: "12px",
+                  padding: "16px 18px",
+                  borderBottom: "1px solid #eee",
                 }}
               >
                 <h2
                   style={{
                     margin: 0,
-                    fontSize: "25px",
+                    fontSize: "22px",
                   }}
                 >
                   Inbox
@@ -319,12 +342,15 @@ useEffect(() => {
                   onClick={loadMessages}
                   disabled={loadingMessages}
                   style={{
-                    padding: "9px 15px",
+                    padding: "8px 14px",
                     background: "#000",
                     color: "#fff",
                     border: "none",
-                    borderRadius: "6px",
-                    cursor: "pointer",
+                    borderRadius: "7px",
+                    cursor: loadingMessages
+                      ? "not-allowed"
+                      : "pointer",
+                    opacity: loadingMessages ? 0.6 : 1,
                   }}
                 >
                   {loadingMessages
@@ -333,151 +359,190 @@ useEffect(() => {
                 </button>
               </div>
 
+              {/* Empty inbox */}
               {messages.length === 0 ? (
                 <div
                   style={{
                     textAlign: "center",
-                    padding: "35px 10px",
+                    padding: "40px 20px",
                     color: "#777",
                   }}
                 >
                   <p
                     style={{
-                      fontSize: "18px",
+                      fontSize: "17px",
+                      margin: "0 0 8px",
                     }}
                   >
                     No messages yet.
                   </p>
 
-                  <p>
-                    This inbox checks for new
-                    messages automatically.
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: "14px",
+                    }}
+                  >
+                    This inbox checks for new messages
+                    automatically.
                   </p>
                 </div>
               ) : (
-                <div>
-                  {messages.map((message) => (
-  <div
-    key={message.id}
-    onClick={() => setSelectedMessage(message)}
-    style={{
-      padding: "18px 0",
-      borderBottom: "1px solid #eee",
-      cursor: "pointer",
-    }}
-  >
-
-{/* Inbox */}
-<div
-  style={{
-    border: "1px solid #ddd",
-                    }}
-  >
-                      <h3
+                <>
+                  {/* Message list */}
+                  <div>
+                    {messages.map((message, index) => (
+                      <div
+                        key={message.id}
+                        onClick={() =>
+                          setSelectedMessage(message)
+                        }
                         style={{
-                          margin:
-                            "0 0 8px",
+                          padding: "18px",
+                          borderBottom:
+                            index === messages.length - 1
+                              ? "none"
+                              : "1px solid #eee",
+                          cursor: "pointer",
+                          transition: "background 0.2s",
                         }}
                       >
-                        {message.subject ||
+                        {/* Subject */}
+                        <h3
+                          style={{
+                            margin: "0 0 7px",
+                            fontSize: "17px",
+                            lineHeight: "1.4",
+                            fontWeight: "600",
+                          }}
+                        >
+                          {message.subject ||
+                            "(No subject)"}
+                        </h3>
+
+                        {/* Sender */}
+                        <p
+                          style={{
+                            margin: "0 0 5px",
+                            color: "#555",
+                            fontSize: "14px",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          From:{" "}
+                          {message.from?.name ||
+                            message.from?.address ||
+                            "Unknown"}
+                        </p>
+
+                        {/* Date */}
+                        {message.createdAt && (
+                          <p
+                            style={{
+                              margin: "0 0 9px",
+                              color: "#999",
+                              fontSize: "12px",
+                            }}
+                          >
+                            {new Date(
+                              message.createdAt
+                            ).toLocaleString()}
+                          </p>
+                        )}
+
+                        {/* Preview */}
+                        <p
+                          style={{
+                            margin: 0,
+                            color: "#666",
+                            fontSize: "14px",
+                            lineHeight: "1.5",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {getPreview(message)}
+                          {(message.intro ||
+                            message.text ||
+                            "").length > 140
+                            ? "..."
+                            : ""}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Selected message */}
+                  {selectedMessage && (
+                    <div
+                      style={{
+                        margin: "18px",
+                        padding: "18px",
+                        border: "1px solid #ddd",
+                        borderRadius: "12px",
+                        background: "#fafafa",
+                      }}
+                    >
+                      <h2
+                        style={{
+                          margin: "0 0 12px",
+                          fontSize: "20px",
+                          lineHeight: "1.4",
+                        }}
+                      >
+                        {selectedMessage.subject ||
                           "(No subject)"}
-                      </h3>
+                      </h2>
 
                       <p
                         style={{
-                          margin:
-                            "0 0 8px",
+                          margin: "0 0 7px",
                           color: "#555",
+                          fontSize: "14px",
                         }}
                       >
                         From:{" "}
-                        {message.from?.name ||
-                          message.from
-                            ?.address ||
+                        {selectedMessage.from?.name ||
+                          selectedMessage.from?.address ||
                           "Unknown"}
                       </p>
 
-                      {message.createdAt && (
+                      {selectedMessage.createdAt && (
                         <p
                           style={{
-                            margin:
-                              "0 0 10px",
+                            margin: "0 0 16px",
                             color: "#999",
-                            fontSize:
-                              "13px",
+                            fontSize: "12px",
                           }}
                         >
                           {new Date(
-                            message.createdAt
+                            selectedMessage.createdAt
                           ).toLocaleString()}
                         </p>
                       )}
 
-                      <p
+                      <div
                         style={{
-                          margin: 0,
-                          lineHeight: "1.5",
+                          paddingTop: "15px",
+                          borderTop: "1px solid #e5e5e5",
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-word",
+                          lineHeight: "1.7",
+                          fontSize: "15px",
+                          color: "#222",
                         }}
                       >
-                        {message.intro ||
-                          message.text ||
-                          "No preview available."}
-                      </p>
+                        {selectedMessage.text ||
+                          selectedMessage.intro ||
+                          "No message content available."}
+                      </div>
                     </div>
-    </div>
-                  ))}
-    {selectedMessage && (
-  <div
-    style={{
-      marginTop: "20px",
-      padding: "20px",
-      border: "1px solid #ddd",
-      borderRadius: "12px",
-      background: "#fff",
-    }}
-  >
-    <h2 style={{ margin: "0 0 12px" }}>
-      {selectedMessage.subject || "(No subject)"}
-    </h2>
-
-    <p
-      style={{
-        margin: "0 0 8px",
-        color: "#555",
-      }}
-    >
-      From:{" "}
-      {selectedMessage.from?.name ||
-        selectedMessage.from?.address ||
-        "Unknown"}
-    </p>
-
-    {selectedMessage.createdAt && (
-      <p
-        style={{
-          margin: "0 0 15px",
-          color: "#999",
-          fontSize: "13px",
-        }}
-      >
-        {new Date(selectedMessage.createdAt).toLocaleString()}
-      </p>
-    )}
-
-    <p
-      style={{
-        margin: 0,
-        lineHeight: "1.5",
-        whiteSpace: "pre-wrap",
-      }}
-    >
-      {selectedMessage.text ||
-        selectedMessage.intro ||
-        "No message content available."}
-    </p>
-  </div>
-)}
-                </div>
+                  )}
+                </>
               )}
             </div>
           </>
@@ -485,4 +550,4 @@ useEffect(() => {
       </div>
     </main>
   );
-      }
+}
