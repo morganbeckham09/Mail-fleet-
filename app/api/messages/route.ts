@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get authentication token
+    // 1. Authenticate mailbox
     const tokenResponse = await fetch(
       `${provider}/token`,
       {
@@ -35,163 +35,178 @@ export async function POST(request: Request) {
       }
     );
 
-    const tokenText =
-      await tokenResponse.text();
-
-    console.log(
-      "Token status:",
-      tokenResponse.status
-    );
-
-    console.log(
-      "Token response:",
-      tokenText
-    );
+    const tokenText = await tokenResponse.text();
 
     if (!tokenResponse.ok) {
       return Response.json(
         {
-          error:
-            "Failed to authenticate mailbox",
+          error: "Failed to authenticate mailbox",
           details: tokenText,
         },
-        {
-          status: tokenResponse.status,
-        }
+        { status: tokenResponse.status }
       );
     }
 
-    const tokenData =
-      JSON.parse(tokenText);
+    let tokenData;
 
-    if (!tokenData.token) {
+    try {
+      tokenData = JSON.parse(tokenText);
+    } catch {
       return Response.json(
         {
-          error:
-            "No authentication token returned",
+          error: "Invalid authentication response",
         },
         { status: 500 }
       );
     }
 
-    console.log(
-      "Authentication successful"
-    );
-
-    // Get inbox messages
-    const messagesResponse =
-      await fetch(
-        `${provider}/messages?page=1`,
+    if (!tokenData.token) {
+      return Response.json(
         {
-          method: "GET",
-          cache: "no-store",
-          headers: {
-            Accept:
-              "application/json",
-            Authorization:
-              `Bearer ${tokenData.token}`,
-          },
-        }
+          error: "No authentication token returned",
+        },
+        { status: 500 }
       );
+    }
+
+    const token = tokenData.token;
+
+    // 2. Get inbox messages
+    const messagesResponse = await fetch(
+      `${provider}/messages?page=1`,
+      {
+        method: "GET",
+        cache: "no-store",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
     const messagesText =
       await messagesResponse.text();
 
-    console.log(
-      "Messages status:",
-      messagesResponse.status
-    );
-
-    console.log(
-      "Messages response:",
-      messagesText
-    );
-
     if (!messagesResponse.ok) {
       return Response.json(
         {
-          error:
-            "Failed to fetch messages",
-          details:
-            messagesText,
+          error: "Failed to fetch messages",
+          details: messagesText,
         },
-        {
-          status:
-            messagesResponse.status,
-        }
+        { status: messagesResponse.status }
       );
     }
 
-    const messagesData =
-      JSON.parse(messagesText);
+    let messagesData;
 
-    const messages =
-      Array.isArray(messagesData)
-        ? messagesData
-        : messagesData["hydra:member"] || [];
+    try {
+      messagesData = JSON.parse(messagesText);
+    } catch {
+      return Response.json(
+        {
+          error: "Invalid messages response",
+        },
+        { status: 500 }
+      );
+    }
 
-    console.log(
-      "Parsed messages:",
-      messages
+    // 3. Handle both API response formats
+    const rawMessages = Array.isArray(messagesData)
+      ? messagesData
+      : messagesData["hydra:member"] || [];
+
+    // 4. Remove duplicate messages
+    const uniqueMessages = Array.from(
+      new Map(
+        rawMessages.map((message: any) => [
+          message.id,
+          message,
+        ])
+      ).values()
     );
 
-    // Clean and normalize messages
-    const cleanedMessages = messages.map(
-      (message: any) => {
-        let intro = message.intro || "";
-        let text = message.text || "";
-
-        const subject =
-          message.subject || "";
-
-        // Detect confirmation code in subject
-        const codeMatch = subject.match(
-          /^([A-Za-z0-9]{4,12})\s+is your confirmation code/i
-        );
-
-        if (codeMatch) {
-          const code = codeMatch[1];
-
-          // Remove the code from the beginning
-          // of the preview/body if duplicated there.
-          const codePattern = new RegExp(
-            `^${code}\\s*`,
-            "i"
-          );
-
-          intro = intro.replace(
-            codePattern,
-            ""
-          );
-
-          text = text.replace(
-            codePattern,
-            ""
-          );
+    // 5. Get full message details
+    const detailedMessages = await Promise.all(
+      uniqueMessages.map(async (message: any) => {
+        if (!message.id) {
+          return message;
         }
 
-        // Clean preview whitespace
-        intro = intro
-          .replace(/\s+/g, " ")
-          .trim();
+        try {
+          const detailResponse = await fetch(
+            `${provider}/messages/${message.id}`,
+            {
+              method: "GET",
+              cache: "no-store",
+              headers: {
+                Accept: "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
 
-        text = text.trim();
+          if (!detailResponse.ok) {
+            return message;
+          }
 
-        return {
-          id: message.id,
-          subject: message.subject,
-          intro,
-          text,
-          createdAt: message.createdAt,
-          from: message.from,
-        };
-      }
+          const detailText =
+            await detailResponse.text();
+
+          const detail = JSON.parse(detailText);
+
+          return {
+            ...message,
+            ...detail,
+          };
+        } catch {
+          // If full message loading fails,
+          // keep the original inbox message.
+          return message;
+        }
+      })
     );
 
-    console.log(
-      "Cleaned messages:",
-      cleanedMessages
+    // 6. Clean message data for the frontend
+    const cleanedMessages = detailedMessages.map(
+      (message: any) => ({
+        id: String(message.id),
+
+        subject:
+          message.subject || "",
+
+        intro:
+          message.intro || "",
+
+        text:
+          message.text ||
+          message.intro ||
+          "",
+
+        createdAt:
+          message.createdAt || "",
+
+        from: {
+          address:
+            message.from?.address || "",
+
+          name:
+            message.from?.name || "",
+        },
+      })
     );
+
+    // 7. Newest messages first
+    cleanedMessages.sort((a: any, b: any) => {
+      const dateA = new Date(
+        a.createdAt || 0
+      ).getTime();
+
+      const dateB = new Date(
+        b.createdAt || 0
+      ).getTime();
+
+      return dateB - dateA;
+    });
 
     return Response.json({
       messages: cleanedMessages,
@@ -204,8 +219,7 @@ export async function POST(request: Request) {
 
     return Response.json(
       {
-        error:
-          "Failed to load inbox",
+        error: "Failed to load inbox",
         details:
           error instanceof Error
             ? error.message
