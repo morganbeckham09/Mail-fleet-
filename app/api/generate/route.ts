@@ -1,77 +1,116 @@
 export async function GET() {
   try {
-    // Get available Mail.tm domains with retry
-let domainResponse;
-let domainText = "";
-let lastStatus = 0;
+    const providers = [
+      "https://api.mail.tm",
+      "https://api.mail.gw",
+    ];
 
-for (let attempt = 1; attempt <= 3; attempt++) {
-  try {
-    domainResponse = await fetch(
-      "https://api.mail.tm/domains?page=1",
-      {
-        cache: "no-store",
-        headers: {
-          Accept: "application/json",
-        },
+    let selectedBase = "";
+    let domain = "";
+    let lastError = "";
+
+    // Find a working Mail.tm/Mail.gw domain
+    for (const base of providers) {
+      try {
+        const response = await fetch(`${base}/domains?page=1`, {
+          method: "GET",
+          cache: "no-store",
+          headers: {
+            Accept: "application/json",
+          },
+        });
+
+        const text = await response.text();
+
+        console.log(
+          `Mail provider domain status (${base}):`,
+          response.status
+        );
+
+        console.log(
+          `Mail provider domain response (${base}):`,
+          text
+        );
+
+        if (!response.ok) {
+          lastError = `${base} returned ${response.status}: ${text}`;
+          continue;
+        }
+
+        let data;
+
+        try {
+          data = JSON.parse(text);
+        } catch {
+          lastError = `${base} returned invalid JSON: ${text}`;
+          continue;
+        }
+
+        const domains = Array.isArray(data["hydra:member"])
+          ? data["hydra:member"]
+          : [];
+
+        const activeDomain = domains.find(
+          (item: any) =>
+            item?.domain &&
+            item?.isActive !== false &&
+            item?.isPrivate !== true
+        );
+
+        if (!activeDomain) {
+          lastError = `${base} returned no active public domains`;
+          continue;
+        }
+
+        selectedBase = base;
+        domain = activeDomain.domain;
+
+        console.log("Selected mail provider:", selectedBase);
+        console.log("Selected domain:", domain);
+
+        break;
+      } catch (error) {
+        lastError =
+          error instanceof Error
+            ? error.message
+            : String(error);
+
+        console.error(
+          `Domain request failed for ${base}:`,
+          error
+        );
       }
-    );
-
-    domainText = await domainResponse.text();
-    lastStatus = domainResponse.status;
-
-    console.log(
-      `Mail.tm domain attempt ${attempt}:`,
-      lastStatus,
-      domainText
-    );
-
-    if (domainResponse.ok) {
-      break;
     }
-  } catch (fetchError) {
-    console.error(
-      `Mail.tm domain attempt ${attempt} error:`,
-      fetchError
-    );
-  }
 
-  // Wait before retrying
-  if (attempt < 3) {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  }
-}
-
-// Mail.tm still failed after 3 attempts
-if (!domainResponse || !domainResponse.ok) {
-  return Response.json(
-    {
-      error: "Mail.tm domains service is temporarily unavailable",
-      status: lastStatus || 503,
-      details: domainText || "No response from Mail.tm",
-    },
-    { status: 503 }
-  );
-}
-
-// Parse Mail.tm response
-let domainData;
-
+    if (!selectedBase || !domain) {
+      return Response.json(
+        {
+          error: "No temporary mail provider is currently available",
+          details: lastError || "No domain was returned",
+        },
+        { status: 503 }
+      );
+    }
 
     // Generate username and password
     const username =
-      "mail" + Math.random().toString(36).substring(2, 12);
+      "mail" +
+      Math.random()
+        .toString(36)
+        .substring(2, 12);
 
     const password =
-      Math.random().toString(36).substring(2, 12) + "A1!";
+      Math.random()
+        .toString(36)
+        .substring(2, 14);
 
     const address = `${username}@${domain}`;
 
-    console.log("Creating Mail.tm account:", address);
+    console.log("Creating Mail account:", address);
 
-    // Create Mail.tm account
+    // Create account
     const accountResponse = await fetch(
-      "https://api.mail.tm/accounts",
+      `${selectedBase}/accounts`,
       {
         method: "POST",
         headers: {
@@ -82,25 +121,26 @@ let domainData;
           address,
           password,
         }),
+        cache: "no-store",
       }
     );
 
     const accountText = await accountResponse.text();
 
     console.log(
-      "Mail.tm account status:",
+      "Mail account status:",
       accountResponse.status
     );
 
     console.log(
-      "Mail.tm account response:",
+      "Mail account response:",
       accountText
     );
 
     if (!accountResponse.ok) {
       return Response.json(
         {
-          error: "Failed to create Mail.tm account",
+          error: "Failed to create temporary email account",
           details: accountText,
         },
         { status: accountResponse.status }
@@ -109,9 +149,14 @@ let domainData;
 
     return Response.json({
       email: address,
+      password,
+      provider: selectedBase,
     });
   } catch (error) {
-    console.error("Generate email error:", error);
+    console.error(
+      "Generate email error:",
+      error
+    );
 
     return Response.json(
       {
