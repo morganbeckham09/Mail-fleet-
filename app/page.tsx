@@ -18,7 +18,13 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [provider, setProvider] = useState("");
-
+const [mailboxes, setMailboxes] = useState<
+  {
+    email: string;
+    password: string;
+    provider: string;
+  }[]
+>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedMessage, setSelectedMessage] =
     useState<Message | null>(null);
