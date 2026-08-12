@@ -9,64 +9,84 @@ export async function GET() {
     let domain = "";
     let lastError = "";
 
-    // Find a working Mail.tm/Mail.gw domain
+    // Find an available domain
     for (const base of providers) {
       try {
-        const response = await fetch(`${base}/domains?page=1`, {
-          method: "GET",
-          cache: "no-store",
-          headers: {
-            Accept: "application/json",
-          },
-        });
+        const domainResponse = await fetch(
+          `${base}/domains?page=1`,
+          {
+            method: "GET",
+            cache: "no-store",
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
 
-        const text = await response.text();
+        const domainText = await domainResponse.text();
 
         console.log(
           `Mail provider domain status (${base}):`,
-          response.status
+          domainResponse.status
         );
 
         console.log(
           `Mail provider domain response (${base}):`,
-          text
+          domainText
         );
 
-        if (!response.ok) {
-          lastError = `${base} returned ${response.status}: ${text}`;
+        if (!domainResponse.ok) {
+          lastError =
+            `${base} returned ${domainResponse.status}: ${domainText}`;
           continue;
         }
 
-        let data;
+        let domainData;
 
         try {
-          data = JSON.parse(text);
+          domainData = JSON.parse(domainText);
         } catch {
-          lastError = `${base} returned invalid JSON: ${text}`;
+          lastError =
+            `${base} returned invalid JSON: ${domainText}`;
           continue;
         }
 
-        const domains = Array.isArray(data["hydra:member"])
-          ? data["hydra:member"]
+        const domains = Array.isArray(
+          domainData["hydra:member"]
+        )
+          ? domainData["hydra:member"]
           : [];
 
-        const activeDomain = domains.find(
-          (item: any) =>
-            item?.domain &&
-            item?.isActive !== false &&
-            item?.isPrivate !== true
+        console.log(
+          `Domains returned by ${base}:`,
+          domains
         );
 
-        if (!activeDomain) {
-          lastError = `${base} returned no active public domains`;
+        // Mail.tm / Mail.gw return domain objects
+        const usableDomain = domains.find(
+          (item: any) =>
+            item?.domain &&
+            item?.isActive !== false
+        );
+
+        if (!usableDomain) {
+          lastError =
+            `${base} returned no active domains`;
           continue;
         }
 
         selectedBase = base;
-        domain = activeDomain.domain;
+        domain = usableDomain.domain;
 
-        console.log("Selected mail provider:", selectedBase);
-        console.log("Selected domain:", domain);
+        console.log(
+          "Selected mail provider:",
+          selectedBase
+        );
+
+        console.log(
+          "Selected domain:",
+          domain
+        );
 
         break;
       } catch (error) {
@@ -82,37 +102,49 @@ export async function GET() {
       }
     }
 
+    // Both providers failed
     if (!selectedBase || !domain) {
       return Response.json(
         {
-          error: "No temporary mail provider is currently available",
-          details: lastError || "No domain was returned",
+          error:
+            "No temporary mail provider is currently available",
+          details:
+            lastError ||
+            "No active domain was returned",
         },
-        { status: 503 }
+        {
+          status: 503,
+        }
       );
     }
 
-    // Generate username and password
+    // Generate random username
     const username =
       "mail" +
       Math.random()
         .toString(36)
         .substring(2, 12);
 
+    // Generate random password
     const password =
       Math.random()
         .toString(36)
         .substring(2, 14);
 
-    const address = `${username}@${domain}`;
+    const address =
+      `${username}@${domain}`;
 
-    console.log("Creating Mail account:", address);
+    console.log(
+      "Creating Mail account:",
+      address
+    );
 
-    // Create account
+    // Create the temporary email account
     const accountResponse = await fetch(
       `${selectedBase}/accounts`,
       {
         method: "POST",
+        cache: "no-store",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
@@ -121,11 +153,11 @@ export async function GET() {
           address,
           password,
         }),
-        cache: "no-store",
       }
     );
 
-    const accountText = await accountResponse.text();
+    const accountText =
+      await accountResponse.text();
 
     console.log(
       "Mail account status:",
@@ -140,16 +172,20 @@ export async function GET() {
     if (!accountResponse.ok) {
       return Response.json(
         {
-          error: "Failed to create temporary email account",
+          error:
+            "Failed to create temporary email account",
           details: accountText,
         },
-        { status: accountResponse.status }
+        {
+          status: accountResponse.status,
+        }
       );
     }
 
+    // Return the generated email
     return Response.json({
       email: address,
-      password,
+      password: password,
       provider: selectedBase,
     });
   } catch (error) {
@@ -166,7 +202,9 @@ export async function GET() {
             ? error.message
             : String(error),
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }
