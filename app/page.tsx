@@ -14,8 +14,31 @@ export default function Home() {
 
     try {
       // Get an available temporary-email domain
-      const domainsResponse = await fetch(
-        "https://api.mail.tm/domains?page=1"
+  async function generateEmail() {
+  setLoading(true);
+  setError("");
+  setEmail("");
+
+  try {
+    const response = await fetch("/api/generate");
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to generate email");
+    }
+
+    setEmail(data.email);
+  } catch (error) {
+    setError(
+      error instanceof Error
+        ? error.message
+        : "Failed to generate email"
+    );
+  } finally {
+    setLoading(false);
+  }
+  }
       );
 
       if (!domainsResponse.ok) {
