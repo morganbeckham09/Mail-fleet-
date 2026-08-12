@@ -437,7 +437,7 @@ fontSize: "15px",
   fontSize: "24px",
   fontWeight: "700",
 }}
-                  }}
+                  
                 >
                   Inbox
                 </h2>
