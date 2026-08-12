@@ -424,6 +424,7 @@ useEffect(() => {
                           "No preview available."}
                       </p>
                     </div>
+    </div>
                   ))}
     {selectedMessage && (
   <div
