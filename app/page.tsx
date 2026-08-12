@@ -1,77 +1,162 @@
-"use client";
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
 
-import { useState } from "react";
+    const {
+      email,
+      password,
+      provider,
+    } = body;
 
-export default function Home() {
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  async function generateEmail() {
-    setLoading(true);
-    setError("");
-    setEmail("");
-
-    try {
-      const response = await fetch("/api/generate");
-
-      const data = await response.json();
-
-      if (!response.ok) {
-  throw new Error(
-    `${data.error || "Request failed"} | Status: ${data.status || response.status} | ${data.details || ""}`
-  );
-      }
-
-      setEmail(data.email);
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Failed to generate email"
+    if (!email || !password || !provider) {
+      return Response.json(
+        {
+          error:
+            "Email, password and provider are required",
+        },
+        { status: 400 }
       );
-    } finally {
-      setLoading(false);
     }
+
+    // Get authentication token
+    const tokenResponse = await fetch(
+      `${provider}/token`,
+      {
+        method: "POST",
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          address: email,
+          password,
+        }),
+      }
+    );
+
+    const tokenText =
+      await tokenResponse.text();
+
+    console.log(
+      "Token status:",
+      tokenResponse.status
+    );
+
+    console.log(
+      "Token response:",
+      tokenText
+    );
+
+    if (!tokenResponse.ok) {
+      return Response.json(
+        {
+          error:
+            "Failed to authenticate mailbox",
+          details: tokenText,
+        },
+        {
+          status: tokenResponse.status,
+        }
+      );
+    }
+
+    const tokenData =
+      JSON.parse(tokenText);
+
+    if (!tokenData.token) {
+      return Response.json(
+        {
+          error:
+            "No authentication token returned",
+        },
+        { status: 500 }
+      );
+    }
+
+    console.log(
+      "Authentication successful"
+    );
+
+    // Get inbox messages
+    const messagesResponse =
+      await fetch(
+        `${provider}/messages?page=1`,
+        {
+          method: "GET",
+          cache: "no-store",
+          headers: {
+            Accept:
+              "application/json",
+            Authorization:
+              `Bearer ${tokenData.token}`,
+          },
+        }
+      );
+
+    const messagesText =
+      await messagesResponse.text();
+
+    console.log(
+      "Messages status:",
+      messagesResponse.status
+    );
+
+    console.log(
+      "Messages response:",
+      messagesText
+    );
+
+    if (!messagesResponse.ok) {
+      return Response.json(
+        {
+          error:
+            "Failed to fetch messages",
+          details:
+            messagesText,
+        },
+        {
+          status:
+            messagesResponse.status,
+        }
+      );
+    }
+
+    const messagesData =
+      JSON.parse(messagesText);
+
+    const messages =
+      Array.isArray(messagesData)
+        ? messagesData
+        : messagesData[
+            "hydra:member"
+          ] || [];
+
+    console.log(
+      "Parsed messages:",
+      messages
+    );
+
+    return Response.json({
+      messages,
+    });
+
+  } catch (error) {
+    console.error(
+      "Messages error:",
+      error
+    );
+
+    return Response.json(
+      {
+        error:
+          "Failed to load inbox",
+        details:
+          error instanceof Error
+            ? error.message
+            : String(error),
+      },
+      { status: 500 }
+    );
   }
-
-  return (
-    <main className="min-h-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-md text-center">
-        <h1 className="text-4xl font-bold mb-4">
-          TempMail
-        </h1>
-
-        <p className="mb-6 text-gray-600">
-          Create a temporary email address instantly.
-        </p>
-
-        <button
-          onClick={generateEmail}
-          disabled={loading}
-          className="px-6 py-3 rounded-lg bg-black text-white disabled:opacity-50"
-        >
-          {loading ? "Generating..." : "Generate Email"}
-        </button>
-
-        {email && (
-          <div className="mt-6 p-4 border rounded-lg">
-            <p className="text-sm text-gray-500 mb-2">
-              Your temporary email:
-            </p>
-
-            <p className="font-semibold break-all">
-              {email}
-            </p>
-          </div>
-        )}
-
-        {error && (
-          <p className="mt-4 text-red-500 break-words">
-            {error}
-          </p>
-        )}
-      </div>
-    </main>
-  );
 }
