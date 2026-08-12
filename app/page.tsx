@@ -46,7 +46,7 @@ useEffect(() => {
     if (!Array.isArray(mailboxes) || mailboxes.length === 0) {
       return;
     }
-
+setMailboxes(mailboxes);
     const mailbox = mailboxes[mailboxes.length - 1];
 
     if (
