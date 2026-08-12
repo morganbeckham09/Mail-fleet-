@@ -30,12 +30,18 @@ export default function Home() {
   // Restore saved mailbox after page reload
 useEffect(() => {
   try {
-    const savedMailbox =
-      localStorage.getItem("tempmail_mailbox");
+    const savedMailboxes =
+      localStorage.getItem("tempmail_mailboxes");
 
-    if (!savedMailbox) return;
+    if (!savedMailboxes) return;
 
-    const mailbox = JSON.parse(savedMailbox);
+    const mailboxes = JSON.parse(savedMailboxes);
+
+    if (!Array.isArray(mailboxes) || mailboxes.length === 0) {
+      return;
+    }
+
+    const mailbox = mailboxes[mailboxes.length - 1];
 
     if (
       mailbox.email &&
@@ -47,8 +53,12 @@ useEffect(() => {
       setProvider(mailbox.provider);
     }
   } catch (error) {
-    console.error("Failed to restore mailbox:", error);
-    localStorage.removeItem("tempmail_mailbox");
+    console.error(
+      "Failed to restore mailboxes:",
+      error
+    );
+
+    localStorage.removeItem("tempmail_mailboxes");
   }
 }, []);
 
