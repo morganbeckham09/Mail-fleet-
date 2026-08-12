@@ -54,7 +54,6 @@ useEffect(() => {
     if (!savedMailboxes) return;
 
     const mailboxes = JSON.parse(savedMailboxes);
-
     if (!Array.isArray(mailboxes) || mailboxes.length === 0) {
       return;
     }
@@ -65,8 +64,7 @@ setMailboxes(mailboxes);
       mailbox.email &&
       mailbox.password &&
       mailbox.provider
-    ) {
-
+    {
   setEmail(mailbox.email);
   setPassword(mailbox.password);
   setProvider(mailbox.provider);
@@ -82,7 +80,7 @@ setMailboxes(mailboxes);
 
     localStorage.removeItem("tempmail_mailboxes");
   }
-}, []);
+[]);
 
   // Generate temporary email
   async function generateEmail() {
