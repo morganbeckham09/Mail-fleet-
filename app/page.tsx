@@ -1,162 +1,68 @@
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
+"use client";
 
-    const {
-      email,
-      password,
-      provider,
-    } = body;
+import { useState } from "react";
 
-    if (!email || !password || !provider) {
-      return Response.json(
-        {
-          error:
-            "Email, password and provider are required",
-        },
-        { status: 400 }
-      );
-    }
+export default function Home() {
+  const [email, setEmail] = useState("");
 
-    // Get authentication token
-    const tokenResponse = await fetch(
-      `${provider}/token`,
-      {
+  async function generateEmail() {
+    try {
+      const response = await fetch("/api/generate", {
         method: "POST",
-        cache: "no-store",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          address: email,
-          password,
-        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate email");
       }
-    );
 
-    const tokenText =
-      await tokenResponse.text();
-
-    console.log(
-      "Token status:",
-      tokenResponse.status
-    );
-
-    console.log(
-      "Token response:",
-      tokenText
-    );
-
-    if (!tokenResponse.ok) {
-      return Response.json(
-        {
-          error:
-            "Failed to authenticate mailbox",
-          details: tokenText,
-        },
-        {
-          status: tokenResponse.status,
-        }
-      );
+      setEmail(data.email);
+    } catch (error) {
+      console.error(error);
     }
-
-    const tokenData =
-      JSON.parse(tokenText);
-
-    if (!tokenData.token) {
-      return Response.json(
-        {
-          error:
-            "No authentication token returned",
-        },
-        { status: 500 }
-      );
-    }
-
-    console.log(
-      "Authentication successful"
-    );
-
-    // Get inbox messages
-    const messagesResponse =
-      await fetch(
-        `${provider}/messages?page=1`,
-        {
-          method: "GET",
-          cache: "no-store",
-          headers: {
-            Accept:
-              "application/json",
-            Authorization:
-              `Bearer ${tokenData.token}`,
-          },
-        }
-      );
-
-    const messagesText =
-      await messagesResponse.text();
-
-    console.log(
-      "Messages status:",
-      messagesResponse.status
-    );
-
-    console.log(
-      "Messages response:",
-      messagesText
-    );
-
-    if (!messagesResponse.ok) {
-      return Response.json(
-        {
-          error:
-            "Failed to fetch messages",
-          details:
-            messagesText,
-        },
-        {
-          status:
-            messagesResponse.status,
-        }
-      );
-    }
-
-    const messagesData =
-      JSON.parse(messagesText);
-
-    const messages =
-      Array.isArray(messagesData)
-        ? messagesData
-        : messagesData[
-            "hydra:member"
-          ] || [];
-
-    console.log(
-      "Parsed messages:",
-      messages
-    );
-
-    return Response.json({
-      messages,
-    });
-
-  } catch (error) {
-    console.error(
-      "Messages error:",
-      error
-    );
-
-    return Response.json(
-      {
-        error:
-          "Failed to load inbox",
-        details:
-          error instanceof Error
-            ? error.message
-            : String(error),
-      },
-      { status: 500 }
-    );
   }
+
+  return (
+    <main
+      style={{
+        minHeight: "100vh",
+        padding: "40px 20px",
+        textAlign: "center",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
+      <h1>TempMail</h1>
+
+      <p>Create a temporary email address instantly.</p>
+
+      <button
+        onClick={generateEmail}
+        style={{
+          padding: "15px 30px",
+          background: "black",
+          color: "white",
+          border: "none",
+          borderRadius: "8px",
+          fontSize: "16px",
+        }}
+      >
+        Generate Email
+      </button>
+
+      {email && (
+        <div
+          style={{
+            marginTop: "30px",
+            padding: "20px",
+            border: "1px solid #ccc",
+            borderRadius: "10px",
+          }}
+        >
+          <p>Your temporary email:</p>
+          <strong>{email}</strong>
+        </div>
+      )}
+    </main>
+  );
 }
