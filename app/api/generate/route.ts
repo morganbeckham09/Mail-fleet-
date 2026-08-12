@@ -1,57 +1,83 @@
 export async function GET() {
   try {
-    // 1. Get available domains
-    const domainResponse = await fetch(
-      "https://api.mail.tm/domains",
-      {
-        cache: "no-store",
-        headers: {
-          Accept: "application/json",
-        },
-      }
-    );
+    // Get available Mail.tm domains
+    const domainResponse = await fetch("https://api.mail.tm/domains", {
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    const domainText = await domainResponse.text();
+
+    console.log("Mail.tm domain status:", domainResponse.status);
+    console.log("Mail.tm domain response:", domainText);
 
     if (!domainResponse.ok) {
-  const errorText = await domainResponse.text();
-
-  console.log("Mail.tm domain status:", domainResponse.status);
-  console.log("Mail.tm domain response:", errorText);
-
-  return Response.json(
-    {
-      error: "Failed to get Mail.tm domains",
-      status: domainResponse.status,
-      details: errorText,
-    },
-    { status: domainResponse.status }
-  );
-    }
-
-    const domainData = await domainResponse.json();
-
-    const domains = domainData["hydra:member"];
-
-    if (!domains || domains.length === 0) {
       return Response.json(
-        { error: "No Mail.tm domains available" },
-        { status: 500 }
+        {
+          error: "Mail.tm domains request failed",
+          status: domainResponse.status,
+          details: domainText,
+        },
+        { status: domainResponse.status }
       );
     }
 
-    // 2. Pick the first available domain
-    const domain = domains[0].domain;
+    let domainData;
 
-    // 3. Generate username and password
+    try {
+      domainData = JSON.parse(domainText);
+    } catch {
+      return Response.json(
+        {
+          error: "Mail.tm returned invalid JSON",
+          details: domainText,
+        },
+        { status: 502 }
+      );
+    }
+
+    const domains = domainData?.["hydra:member"] ?? [];
+
+    if (!Array.isArray(domains) || domains.length === 0) {
+      return Response.json(
+        {
+          error: "No Mail.tm domains available",
+          details: domainData,
+        },
+        { status: 503 }
+      );
+    }
+
+    // Pick the first active domain
+    const activeDomain =
+      domains.find((item: any) => item?.isActive === true) ?? domains[0];
+
+    const domain = activeDomain?.domain;
+
+    if (!domain) {
+      return Response.json(
+        {
+          error: "Mail.tm returned a domain without a domain name",
+          details: activeDomain,
+        },
+        { status: 502 }
+      );
+    }
+
+    // Generate username and password
     const username =
-      "mail" + Math.random().toString(36).substring(2, 10);
+      "mail" + Math.random().toString(36).substring(2, 12);
 
     const password =
-      Math.random().toString(36).substring(2, 14) +
-      "A1!";
+      Math.random().toString(36).substring(2, 12) + "A1!";
 
     const address = `${username}@${domain}`;
 
-    // 4. Create the Mail.tm account
+    console.log("Creating Mail.tm account:", address);
+
+    // Create Mail.tm account
     const accountResponse = await fetch(
       "https://api.mail.tm/accounts",
       {
@@ -82,14 +108,13 @@ export async function GET() {
     if (!accountResponse.ok) {
       return Response.json(
         {
-          error: "Failed to create email account",
+          error: "Failed to create Mail.tm account",
           details: accountText,
         },
         { status: accountResponse.status }
       );
     }
 
-    // 5. Return the email to your frontend
     return Response.json({
       email: address,
     });
