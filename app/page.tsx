@@ -371,7 +371,7 @@ useEffect(() => {
 <div
   style={{
     border: "1px solid #ddd",
-                    >
+                    > }}
                       <h3
                         style={{
                           margin:
