@@ -238,9 +238,14 @@ export default function Home() {
               <br />
 
               <button
-                onClick={() =>
-                  navigator.clipboard.writeText(email)
-                }
+                onClick={async () => {
+  try {
+    await navigator.clipboard.writeText(email);
+    alert("Email copied!");
+  } catch {
+    alert("Copy failed. Please copy the email manually.");
+  }
+}}
                 style={{
                   marginTop: "15px",
                   padding: "9px 18px",
