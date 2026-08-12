@@ -1,68 +1,392 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+type Message = {
+  id: string;
+  subject?: string;
+  intro?: string;
+  text?: string;
+  createdAt?: string;
+  from?: {
+    address?: string;
+    name?: string;
+  };
+};
 
 export default function Home() {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [provider, setProvider] = useState("");
 
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  const [generating, setGenerating] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [error, setError] = useState("");
+
+  // Generate temporary email
   async function generateEmail() {
     try {
+      setGenerating(true);
+      setError("");
+      setEmail("");
+      setPassword("");
+      setProvider("");
+      setMessages([]);
+
+      // IMPORTANT:
+      // /api/generate uses GET, not POST
       const response = await fetch("/api/generate", {
-        method: "POST",
+        method: "GET",
+        cache: "no-store",
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to generate email");
+        throw new Error(
+          data.error || "Failed to generate email"
+        );
       }
 
+      console.log("Generated mailbox:", data);
+
       setEmail(data.email);
+      setPassword(data.password);
+      setProvider(data.provider);
     } catch (error) {
-      console.error(error);
+      console.error("Generate error:", error);
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to generate email"
+      );
+    } finally {
+      setGenerating(false);
     }
   }
+
+  // Load inbox messages
+  async function loadMessages() {
+    if (!email || !password || !provider) {
+      return;
+    }
+
+    try {
+      setLoadingMessages(true);
+
+      const response = await fetch("/api/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+        body: JSON.stringify({
+          email,
+          password,
+          provider,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || "Failed to load inbox"
+        );
+      }
+
+      setMessages(data.messages || []);
+      setError("");
+    } catch (error) {
+      console.error("Inbox error:", error);
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to load inbox"
+      );
+    } finally {
+      setLoadingMessages(false);
+    }
+  }
+
+  // Automatically refresh inbox every 5 seconds
+  useEffect(() => {
+    if (!email || !password || !provider) {
+      return;
+    }
+
+    loadMessages();
+
+    const interval = setInterval(() => {
+      loadMessages();
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [email, password, provider]);
 
   return (
     <main
       style={{
         minHeight: "100vh",
-        padding: "40px 20px",
-        textAlign: "center",
+        background: "#ffffff",
+        padding: "60px 20px",
         fontFamily: "Arial, sans-serif",
       }}
     >
-      <h1>TempMail</h1>
-
-      <p>Create a temporary email address instantly.</p>
-
-      <button
-        onClick={generateEmail}
+      <div
         style={{
-          padding: "15px 30px",
-          background: "black",
-          color: "white",
-          border: "none",
-          borderRadius: "8px",
-          fontSize: "16px",
+          maxWidth: "700px",
+          margin: "0 auto",
         }}
       >
-        Generate Email
-      </button>
-
-      {email && (
-        <div
+        <h1
           style={{
-            marginTop: "30px",
-            padding: "20px",
-            border: "1px solid #ccc",
-            borderRadius: "10px",
+            textAlign: "center",
+            fontSize: "48px",
+            marginBottom: "10px",
           }}
         >
-          <p>Your temporary email:</p>
-          <strong>{email}</strong>
-        </div>
-      )}
+          TempMail
+        </h1>
+
+        <p
+          style={{
+            textAlign: "center",
+            color: "#666",
+            fontSize: "20px",
+            marginBottom: "35px",
+          }}
+        >
+          Create a temporary email address instantly.
+        </p>
+
+        <button
+          onClick={generateEmail}
+          disabled={generating}
+          style={{
+            display: "block",
+            margin: "0 auto 30px",
+            padding: "16px 35px",
+            background: "#000",
+            color: "#fff",
+            border: "none",
+            borderRadius: "10px",
+            fontSize: "18px",
+            cursor: generating
+              ? "not-allowed"
+              : "pointer",
+            opacity: generating ? 0.6 : 1,
+          }}
+        >
+          {generating
+            ? "Generating..."
+            : "Generate Email"}
+        </button>
+
+        {error && (
+          <div
+            style={{
+              padding: "15px",
+              marginBottom: "20px",
+              background: "#ffe5e5",
+              color: "#b00020",
+              borderRadius: "8px",
+              textAlign: "center",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        {email && (
+          <>
+            {/* Email address */}
+            <div
+              style={{
+                border: "1px solid #222",
+                borderRadius: "10px",
+                padding: "25px",
+                textAlign: "center",
+                marginBottom: "25px",
+              }}
+            >
+              <p
+                style={{
+                  color: "#777",
+                  fontSize: "18px",
+                  marginBottom: "10px",
+                }}
+              >
+                Your temporary email:
+              </p>
+
+              <strong
+                style={{
+                  fontSize: "22px",
+                  wordBreak: "break-all",
+                }}
+              >
+                {email}
+              </strong>
+
+              <br />
+
+              <button
+                onClick={() =>
+                  navigator.clipboard.writeText(email)
+                }
+                style={{
+                  marginTop: "15px",
+                  padding: "9px 18px",
+                  background: "#fff",
+                  border: "1px solid #ccc",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                }}
+              >
+                Copy
+              </button>
+            </div>
+
+            {/* Inbox */}
+            <div
+              style={{
+                border: "1px solid #ddd",
+                borderRadius: "10px",
+                padding: "20px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "20px",
+                }}
+              >
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: "25px",
+                  }}
+                >
+                  Inbox
+                </h2>
+
+                <button
+                  onClick={loadMessages}
+                  disabled={loadingMessages}
+                  style={{
+                    padding: "9px 15px",
+                    background: "#000",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                  }}
+                >
+                  {loadingMessages
+                    ? "Loading..."
+                    : "Refresh"}
+                </button>
+              </div>
+
+              {messages.length === 0 ? (
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "35px 10px",
+                    color: "#777",
+                  }}
+                >
+                  <p
+                    style={{
+                      fontSize: "18px",
+                    }}
+                  >
+                    No messages yet.
+                  </p>
+
+                  <p>
+                    This inbox checks for new
+                    messages automatically.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      style={{
+                        padding: "18px 0",
+                        borderBottom:
+                          "1px solid #eee",
+                      }}
+                    >
+                      <h3
+                        style={{
+                          margin:
+                            "0 0 8px",
+                        }}
+                      >
+                        {message.subject ||
+                          "(No subject)"}
+                      </h3>
+
+                      <p
+                        style={{
+                          margin:
+                            "0 0 8px",
+                          color: "#555",
+                        }}
+                      >
+                        From:{" "}
+                        {message.from?.name ||
+                          message.from
+                            ?.address ||
+                          "Unknown"}
+                      </p>
+
+                      {message.createdAt && (
+                        <p
+                          style={{
+                            margin:
+                              "0 0 10px",
+                            color: "#999",
+                            fontSize:
+                              "13px",
+                          }}
+                        >
+                          {new Date(
+                            message.createdAt
+                          ).toLocaleString()}
+                        </p>
+                      )}
+
+                      <p
+                        style={{
+                          margin: 0,
+                          lineHeight: "1.5",
+                        }}
+                      >
+                        {message.intro ||
+                          message.text ||
+                          "No preview available."}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </main>
   );
-}
+      }
