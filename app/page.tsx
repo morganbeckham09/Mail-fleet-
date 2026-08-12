@@ -340,7 +340,8 @@ localStorage.setItem(
                 overflow: "hidden",
                 background: "#fff",
               }}
-              </div>
+              >
+        
               {/* Inbox header */}
               <div
                 style={{
