@@ -390,7 +390,7 @@ fontSize: "17px",
     <h2
       style={{
         margin: "0 0 14px",
-        fontSize: "21px"
+        fontSize: "21px",
         fontWeight: "700"
       }}
     >
