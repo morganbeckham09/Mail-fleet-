@@ -131,32 +131,61 @@ export async function POST(request: Request) {
         : messagesData[
             "hydra:member"
           ] || [];
+    // Clean and normalize messages before sending them
+    // to the frontend.
+    const cleanedMessages = messages.map(
+      (message: any) => {
+        let intro = message.intro || "";
+        let text = message.text || "";
+
+        const subject = message.subject || "";
+
+        // If the subject contains a confirmation code,
+        // remove that code from the beginning of the
+        // message preview/body when the provider has
+        // duplicated it there.
+        const codeMatch = subject.match(
+          /^([A-Za-z0-9]{4,12})\s+is your confirmation code/i
+        );
+
+        if (codeMatch) {
+          const code = codeMatch[1];
+
+          // Remove code only when it appears directly
+          // at the beginning of the content.
+          const codePattern = new RegExp(
+            `^${code}\\s*`,
+            "i"
+          );
+
+          intro = intro.replace(codePattern, "");
+          text = text.replace(codePattern, "");
+        }
+
+        // Clean excessive whitespace while preserving
+        // the original full message formatting.
+        intro = intro
+          .replace(/\s+/g, " ")
+          .trim();
+
+        text = text.trim();
+
+        return {
+          id: message.id,
+          subject: message.subject,
+          intro,
+          text,
+          createdAt: message.createdAt,
+          from: message.from,
+        };
+      }
+    );
 
     console.log(
-      "Parsed messages:",
-      messages
+      "Cleaned messages:",
+      cleanedMessages
     );
 
     return Response.json({
-      messages,
+      messages: cleanedMessages,
     });
-
-  } catch (error) {
-    console.error(
-      "Messages error:",
-      error
-    );
-
-    return Response.json(
-      {
-        error:
-          "Failed to load inbox",
-        details:
-          error instanceof Error
-            ? error.message
-            : String(error),
-      },
-      { status: 500 }
-    );
-  }
-}
