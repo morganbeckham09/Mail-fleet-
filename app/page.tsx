@@ -417,7 +417,7 @@ fontSize: "17px",
           style={{
             width: "100%",
             padding: "14px 16px",
-background: ...
+background: "#fff",
 border: "1px solid #e5e5e5",
 borderRadius: "10px",
 fontSize: "15px",
