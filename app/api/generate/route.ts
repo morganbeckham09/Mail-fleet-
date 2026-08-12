@@ -64,17 +64,18 @@ export async function GET() {
       console.log("Selected domain:", domain);
 
       const username =
-        "mail" +
-        Math.random()
-          .toString(36)
-          .substring(2, 12);
+  "mail" +
+  crypto.randomUUID()
+    .replace(/-/g, "")
+    .substring(0, 12);
 
-      const password =
-        Math.random()
-          .toString(36)
-          .substring(2, 14);
+const password =
+  "Temp" +
+  crypto.randomUUID()
+    .replace(/-/g, "")
+    .substring(0, 16);
 
-      const address = `${username}@${domain}`;
+const address = `${username}@${domain}`;
 
       console.log("Creating account:", address);
 
