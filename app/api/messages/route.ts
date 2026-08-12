@@ -266,3 +266,15 @@ const cleanedMessages =
       // ...
     })
   );
+  return Response.json({
+    messages: cleanedMessages,
+  });
+} catch (error) {
+  console.error("Messages API error:", error);
+
+  return Response.json(
+    { error: "Internal server error" },
+    { status: 500 }
+  );
+}
+  }
