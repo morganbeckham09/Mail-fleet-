@@ -76,9 +76,9 @@ if (
 
   localStorage.removeItem("tempmail_mailboxes");
 }
-}, []);
+
   
-[]);
+
 
   // Generate temporary email
   async function generateEmail() {
