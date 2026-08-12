@@ -12,15 +12,19 @@ export async function GET() {
     );
 
     if (!domainResponse.ok) {
-      const errorText = await domainResponse.text();
+  const errorText = await domainResponse.text();
 
-      return Response.json(
-        {
-          error: "Failed to get Mail.tm domains",
-          details: errorText,
-        },
-        { status: domainResponse.status }
-      );
+  console.log("Mail.tm domain status:", domainResponse.status);
+  console.log("Mail.tm domain response:", errorText);
+
+  return Response.json(
+    {
+      error: "Failed to get Mail.tm domains",
+      status: domainResponse.status,
+      details: errorText,
+    },
+    { status: domainResponse.status }
+  );
     }
 
     const domainData = await domainResponse.json();
