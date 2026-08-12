@@ -235,10 +235,12 @@ localStorage.setItem(
         {/* Header */}
         <h1
           style={{
-            textAlign: "center",
-            fontSize: "clamp(36px, 8vw, 48px)",
-            margin: "10px 0",
-          }}
+  textAlign: "center",
+  fontSize: "clamp(40px, 9vw, 56px)",
+  fontWeight: "800",
+  letterSpacing: "-1px",
+  margin: "10px 0 14px",
+}}
         >
           TempMail
         </h1>
@@ -246,8 +248,8 @@ localStorage.setItem(
         <p
           style={{
             textAlign: "center",
-            color: "#666",
-            fontSize: "18px",
+            color: "#555",
+fontSize: "17px",
             lineHeight: "1.5",
             marginBottom: "30px",
           }}
@@ -262,12 +264,10 @@ localStorage.setItem(
           style={{
             display: "block",
             margin: "0 auto 25px",
-            padding: "14px 28px",
-            background: "#000",
-            color: "#fff",
-            border: "none",
-            borderRadius: "10px",
-            fontSize: "17px",
+            padding: "15px 32px",
+background: "#111",
+borderRadius: "12px",
+fontSize: "17px",
             fontWeight: "600",
             cursor: generating
               ? "not-allowed"
@@ -359,11 +359,11 @@ localStorage.setItem(
             {/* Inbox */}
             <div
               style={{
-                border: "1px solid #ddd",
-                borderRadius: "14px",
-                overflow: "hidden",
-                background: "#fff",
-              }}
+  border: "1px solid #e5e5e5",
+  borderRadius: "16px",
+  overflow: "hidden",
+  background: "#fafafa",
+}}
               >
         
               {/* Inbox header */}
@@ -380,17 +380,18 @@ localStorage.setItem(
 {mailboxes.length > 0 && (
   <div
     style={{
-      border: "1px solid #ddd",
-      borderRadius: "14px",
-      padding: "18px",
-      marginBottom: "20px",
-      background: "#fff",
-    }}
+  border: "1px solid #e5e5e5",
+  borderRadius: "16px",
+  padding: "20px",
+  marginBottom: "20px",
+  background: "#fff",
+}}
   >
     <h2
       style={{
         margin: "0 0 14px",
-        fontSize: "20px",
+        fontSize: "21px"
+        fontWeight: "700"
       }}
     >
       My Emails
@@ -415,16 +416,11 @@ localStorage.setItem(
           }}
           style={{
             width: "100%",
-            padding: "12px 14px",
-            textAlign: "left",
-            background:
-              mailbox.email === email
-                ? "#f0f0f0"
-                : "#fff",
-            border: "1px solid #ddd",
-            borderRadius: "9px",
-            cursor: "pointer",
-            fontSize: "14px",
+            padding: "14px 16px",
+background: ...
+border: "1px solid #e5e5e5",
+borderRadius: "10px",
+fontSize: "15px",
             wordBreak: "break-all",
           }}
         >
@@ -437,8 +433,10 @@ localStorage.setItem(
 )}
                 <h2
                   style={{
-                    margin: 0,
-                    fontSize: "22px",
+  margin: 0,
+  fontSize: "24px",
+  fontWeight: "700",
+}}
                   }}
                 >
                   Inbox
@@ -448,14 +446,13 @@ localStorage.setItem(
                   onClick={loadMessages}
                   disabled={loadingMessages}
                   style={{
-                    padding: "8px 14px",
-                    background: "#000",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "7px",
-                    cursor: loadingMessages
-                      ? "not-allowed"
-                      : "pointer",
+                    padding: "10px 18px",
+background: "#111",
+borderRadius: "10px",
+fontSize: "15px",
+fontWeight: "600",
+                    cursor: loadingMessage ? 
+                   "not-allowed"   : "pointer",
                     opacity: loadingMessages ? 0.6 : 1,
                   }}
                 >
