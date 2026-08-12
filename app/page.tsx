@@ -50,32 +50,44 @@ useEffect(() => {
   const [error, setError] = useState("");
 
   
+  
+  useEffect(() => {
+  if (typeof window === "undefined") return;
+
+  const savedMailboxes = localStorage.getItem("tempmail_mailboxes");
+
   try {
     if (!savedMailboxes) return;
 
     const mailboxes = JSON.parse(savedMailboxes);
-    if (!Array.isArray(mailboxes) || mailboxes.length === 0) {
-      return;
-    }
-setMailboxes(mailboxes);
-    const mailbox = mailboxes[mailboxes.length - 1];
-if (
-  mailbox.email &&
-  mailbox.password &&
-  mailbox.provider
-) {
-  setEmail(mailbox.email);
-  setPassword(mailbox.password);
-  setProvider(mailbox.provider);
-}
-} catch (error) {
-  console.error(
-    "Failed to restore mailboxes:",
-    error
-  );
 
-  localStorage.removeItem("tempmail_mailboxes");
-}
+    if (!Array.isArray(mailboxes)) return;
+
+    setMailboxes(mailboxes);
+
+    const mailbox = mailboxes[mailboxes.length - 1];
+
+    if (
+      mailbox.email &&
+      mailbox.password &&
+      mailbox.provider
+    ) {
+      setEmail(mailbox.email);
+      setPassword(mailbox.password);
+      setProvider(mailbox.provider);
+    }
+  } catch (error) {
+    console.error(
+      "Failed to restore mailboxes:",
+      error
+    );
+
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("tempmail_mailboxes");
+    }
+  }
+}, []);
+  
 
   
 
