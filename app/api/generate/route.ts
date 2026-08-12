@@ -20,9 +20,16 @@ export async function GET() {
       );
     }
 
-    const data = JSON.parse(text);
+  const match = text.match(/<domain>(.*?)<\/domain>/);
 
-    const domains = data?.["hydra:member"];
+if (!match) {
+  return Response.json(
+    { error: "No domain found", response: text },
+    { status: 500 }
+  );
+}
+
+const domain = match[1];
 
     if (!Array.isArray(domains) || domains.length === 0) {
       return Response.json(
