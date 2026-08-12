@@ -20,7 +20,8 @@ export default function Home() {
   const [provider, setProvider] = useState("");
 
   const [messages, setMessages] = useState<Message[]>([]);
-
+const [selectedMessage, setSelectedMessage] =
+  useState<Message | null>(null);
   const [generating, setGenerating] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [error, setError] = useState("");
@@ -356,13 +357,20 @@ useEffect(() => {
               ) : (
                 <div>
                   {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      style={{
-                        padding: "18px 0",
-                        borderBottom:
-                          "1px solid #eee",
-                      }}
+  <div
+    key={message.id}
+    onClick={() => setSelectedMessage(message)}
+    style={{
+      padding: "18px 0",
+      borderBottom: "1px solid #eee",
+      cursor: "pointer",
+    }}
+  >
+
+{/* Inbox */}
+<div
+  style={{
+    border: "1px solid #ddd",
                     >
                       <h3
                         style={{
@@ -415,7 +423,57 @@ useEffect(() => {
                           "No preview available."}
                       </p>
                     </div>
-                  ))}
+                  ))}{selectedMessage && (
+  <div
+    style={{
+      marginTop: "20px",
+      padding: "20px",
+      border: "1px solid #ddd",
+      borderRadius: "12px",
+      background: "#fff",
+    }}
+  >
+    <h2 style={{ margin: "0 0 12px" }}>
+      {selectedMessage.subject || "(No subject)"}
+    </h2>
+
+    <p
+      style={{
+        margin: "0 0 8px",
+        color: "#555",
+      }}
+    >
+      From:{" "}
+      {selectedMessage.from?.name ||
+        selectedMessage.from?.address ||
+        "Unknown"}
+    </p>
+
+    {selectedMessage.createdAt && (
+      <p
+        style={{
+          margin: "0 0 15px",
+          color: "#999",
+          fontSize: "13px",
+        }}
+      >
+        {new Date(selectedMessage.createdAt).toLocaleString()}
+      </p>
+    )}
+
+    <p
+      style={{
+        margin: 0,
+        lineHeight: "1.5",
+        whiteSpace: "pre-wrap",
+      }}
+    >
+      {selectedMessage.text ||
+        selectedMessage.intro ||
+        "No message content available."}
+    </p>
+  </div>
+)}
                 </div>
               )}
             </div>
