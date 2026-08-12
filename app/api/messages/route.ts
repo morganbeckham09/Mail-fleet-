@@ -75,7 +75,8 @@ export async function POST(request: Request) {
         cache: "no-store",
         headers: {
           Accept: "application/json",
-          Authorization: `Bearer ${tokenData.token}`,
+          Authorization: `Bearer $
+            {tokenData.token}`,
         },
       }
     );
