@@ -23,7 +23,10 @@ const [mailboxes, setMailboxes] = useState<
     email: string;
     password: string;
     provider: string;
-    useEffect(() => {
+  }[]
+>([]);
+
+useEffect(() => {
   const saved = localStorage.getItem("temp-mailboxes");
 
   if (saved) {
