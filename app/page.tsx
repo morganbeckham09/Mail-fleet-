@@ -424,7 +424,8 @@ useEffect(() => {
                           "No preview available."}
                       </p>
                     </div>
-                  )}{selectedMessage && (
+                  ))}
+    {selectedMessage && (
   <div
     style={{
       marginTop: "20px",
