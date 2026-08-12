@@ -50,7 +50,7 @@ useEffect(() => {
   const [error, setError] = useState("");
 
   
-
+  {
     if (!savedMailboxes) return;
 
     const mailboxes = JSON.parse(savedMailboxes);
