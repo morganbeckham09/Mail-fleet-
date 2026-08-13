@@ -548,7 +548,7 @@ const newMailbox: Mailbox = {
                             "flex",
                           gap: "8px",
                         }}
-                      
+                      >
                         <button
                           onClick={() =>
                             selectMailbox(
