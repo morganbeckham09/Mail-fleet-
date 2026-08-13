@@ -113,8 +113,8 @@ if (
   );
 
   return () => {
-    clearInterval(interval);
-  };
+  clearInterval(interval);
+};
 }, []);
   useEffect(() => {
   const interval = setInterval(() => {
