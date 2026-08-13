@@ -116,14 +116,7 @@ if (
   clearInterval(interval);
 };
 }, []);
-  useEffect(() => {
-  const interval = setInterval(() => {
-    setCurrentTime(Date.now());
-  }, 60 * 1000);
-
-  return () => clearInterval(interval);
-
-            },     []);
+  
 
   // Generate temporary email
   async function generateEmail() {
