@@ -49,9 +49,16 @@ export default function Home() {
 
       if (!Array.isArray(parsed)) return;
 
-      setMailboxes(parsed);
+      const validMailboxes = parsed.filter(
+  (mailbox: Mailbox) =>
+    !mailbox.expiresAt ||
+    mailbox.expiresAt > Date.now()
+);
 
-      const active = parsed[parsed.length - 1];
+setMailboxes(validMailboxes);
+
+      const active =
+  validMailboxes[validMailboxes.length - 1];
 
       if (
         active?.email &&
@@ -76,14 +83,27 @@ useEffect(() => {
   const cleanup = () => {
     const now = Date.now();
 
-    setMailboxes((current) =>
-      current.filter(
-        (mailbox) =>
-          !mailbox.expiresAt ||
-          mailbox.expiresAt > now
-      )
-    );
-  };
+    const activeMailboxes = mailboxes.filter(
+  (mailbox) =>
+    !mailbox.expiresAt ||
+    mailbox.expiresAt > now
+);
+
+setMailboxes(activeMailboxes);
+
+if (
+  email &&
+  !activeMailboxes.some(
+    (mailbox) =>
+      mailbox.email === email
+  )
+) {
+  setEmail("");
+  setPassword("");
+  setProvider("");
+  setMessages([]);
+  setSelectedMessage(null);
+}
 
   cleanup();
 
@@ -516,11 +536,17 @@ const newMailbox: Mailbox = {
                     gap: "8px",
                   }}
                 >
-                  {mailboxes.map(
-                    (
-                      mailbox,
-                      index
-                    ) => (
+                  {mailboxes
+  .filter(
+    (mailbox) =>
+      mailbox.expiresAt >
+      Date.now()
+  )
+  .map(
+    (
+      mailbox,
+      index
+    ) => (
                       <div
                         key={`${mailbox.email}-${index}`}
                         style={{
