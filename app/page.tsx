@@ -122,7 +122,8 @@ if (
   }, 60 * 1000);
 
   return () => clearInterval(interval);
-}, []);
+
+            },     []);
 
   // Generate temporary email
   async function generateEmail() {
