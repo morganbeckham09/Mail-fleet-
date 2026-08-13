@@ -1,3 +1,8 @@
+const ALLOWED_PROVIDERS = new Set([
+  "https://api.mail.tm",
+  "https://api.mail.gw",
+]);
+
 function cleanMessageText(text: string) {
   if (!text) return "";
 
@@ -6,23 +11,30 @@ function cleanMessageText(text: string) {
     .replace(/\r/g, "\n")
     .trim();
 
-  // Remove separator lines
   cleaned = cleaned.replace(/^={5,}\s*$/gm, "");
 
-  // Remove things like:
-  // 25564Don't share this code with anyone.
   cleaned = cleaned.replace(
     /\b\d{5}Don't share this code with anyone\.\s*/gi,
     ""
   );
 
-  // Remove the security footer
   cleaned = cleaned.replace(
     /If someone asks for this code[\s\S]*$/i,
     ""
   );
 
-  // Remove excessive blank lines
+  cleaned = cleaned.replace(
+    /Don't share this code with anyone\.?/gi,
+    ""
+  );
+
+  cleaned = cleaned.replace(
+    /Here's your confirmation code:\s*/gi,
+    ""
+  );
+
+  cleaned = cleaned.replace(/^=+\s*$/gm, "");
+
   cleaned = cleaned.replace(/\n{3,}/g, "\n\n");
 
   return cleaned.trim();
@@ -43,6 +55,16 @@ export async function POST(request: Request) {
         {
           error:
             "Email, password and provider are required",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Only allow our trusted mail providers
+    if (!ALLOWED_PROVIDERS.has(provider)) {
+      return Response.json(
+        {
+          error: "Invalid mail provider",
         },
         { status: 400 }
       );
@@ -73,7 +95,6 @@ export async function POST(request: Request) {
         {
           error:
             "Failed to authenticate mailbox",
-          details: tokenText,
         },
         {
           status: tokenResponse.status,
@@ -81,7 +102,7 @@ export async function POST(request: Request) {
       );
     }
 
-    let tokenData;
+    let tokenData: any;
 
     try {
       tokenData = JSON.parse(tokenText);
@@ -95,7 +116,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!tokenData.token) {
+    if (!tokenData?.token) {
       return Response.json(
         {
           error:
@@ -113,8 +134,7 @@ export async function POST(request: Request) {
           method: "GET",
           cache: "no-store",
           headers: {
-            Accept:
-              "application/json",
+            Accept: "application/json",
             Authorization:
               `Bearer ${tokenData.token}`,
           },
@@ -129,7 +149,6 @@ export async function POST(request: Request) {
         {
           error:
             "Failed to fetch messages",
-          details: messagesText,
         },
         {
           status:
@@ -138,7 +157,7 @@ export async function POST(request: Request) {
       );
     }
 
-    let messagesData;
+    let messagesData: any;
 
     try {
       messagesData =
@@ -156,7 +175,7 @@ export async function POST(request: Request) {
     const rawMessages =
       Array.isArray(messagesData)
         ? messagesData
-        : messagesData["hydra:member"] || [];
+        : messagesData?.["hydra:member"] || [];
 
     // Remove duplicate messages
     const uniqueMessages = Array.from(
@@ -175,7 +194,7 @@ export async function POST(request: Request) {
       await Promise.all(
         uniqueMessages.map(
           async (message: any) => {
-            if (!message.id) {
+            if (!message?.id) {
               return message;
             }
 
@@ -216,65 +235,55 @@ export async function POST(request: Request) {
         )
       );
 
-function cleanMessageText(text: string) {
-  let cleaned = text;
+    // Clean messages for the frontend
+    const cleanedMessages =
+      detailedMessages.map(
+        (message: any) => ({
+          id: String(message?.id || ""),
 
-  // Remove "Don't share this code with anyone."
-  cleaned = cleaned.replace(
-    /Don't share this code with anyone\.?/gi,
-    ""
-  );
+          subject:
+            message?.subject || "",
 
-  // Remove "Here's your confirmation code:"
-  cleaned = cleaned.replace(
-    /Here's your confirmation code:\s*/gi,
-    ""
-  );
+          intro:
+            message?.intro || "",
 
-  // Remove lines made only of "=" characters
-  cleaned = cleaned.replace(
-    /^=+\s*$/gm,
-    ""
-  );
+          text: cleanMessageText(
+            message?.text ||
+            message?.intro ||
+            ""
+          ),
 
-  // Remove repeated blank lines
-  cleaned = cleaned.replace(
-    /\n{3,}/g,
-    "\n\n"
-  );
+          from:
+            message?.from || null,
 
-  return cleaned.trim();
-}
-// Clean messages
-const cleanedMessages =
-  detailedMessages.map(
-    (message: any) => ({
-      id: String(message.id),
+          to:
+            message?.to || null,
 
-      subject:
-        message.subject || "",
+          createdAt:
+            message?.createdAt || null,
 
-      intro:
-        message.intro || "",
+          seen:
+            Boolean(message?.seen),
+        })
+      );
 
-      text: cleanMessageText(
-        message.text ||
-        message.intro ||
-        ""
-      ),
+    return Response.json({
+      messages: cleanedMessages,
+    });
+  } catch (error) {
+    console.error(
+      "Messages API error:",
+      error
+    );
 
-      // ...
-    })
-  );
-  return Response.json({
-    messages: cleanedMessages,
-  });
-} catch (error) {
-  console.error("Messages API error:", error);
-
-  return Response.json(
-    { error: "Internal server error" },
-    { status: 500 }
-  );
-}
+    return Response.json(
+      {
+        error:
+          "Internal server error",
+      },
+      {
+        status: 500,
+      }
+    );
   }
+}
