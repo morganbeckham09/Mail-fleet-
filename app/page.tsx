@@ -578,15 +578,15 @@ const newMailbox: Mailbox = {
                             wordBreak:
                               "break-all",
                           }}
-                        >
+                        <button>
                           {mailbox.email}
 
-                          {mailbox.email}
+          
 
 {mailbox.email === email &&
   " (Active)"}
 
-<br />
+                        </button>div>
 {(() => {
   const minutes = Math.max(
     0,
