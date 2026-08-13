@@ -13,11 +13,12 @@ type Message = {
     name?: string;
   };
 };
-
 type Mailbox = {
   email: string;
   password: string;
   provider: string;
+  createdAt: number;
+  expiresAt: number;
 };
 
 const STORAGE_KEY = "tempmail_mailboxes";
@@ -69,14 +70,32 @@ export default function Home() {
       localStorage.removeItem(STORAGE_KEY);
     }
   }, []);
+// Remove expired mailboxes
+useEffect(() => {
+  const cleanup = () => {
+    const now = Date.now();
 
-  // Save mailboxes
-  useEffect(() => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(mailboxes)
+    setMailboxes((current) =>
+      current.filter(
+        (mailbox) =>
+          !mailbox.expiresAt ||
+          mailbox.expiresAt > now
+      )
     );
-  }, [mailboxes]);
+  };
+
+  cleanup();
+
+  const interval = setInterval(
+    cleanup,
+    60 * 1000
+  );
+
+  return () => {
+    clearInterval(interval);
+  };
+}, []);
+  
 
   // Generate temporary email
   async function generateEmail() {
@@ -103,11 +122,15 @@ export default function Home() {
         );
       }
 
-      const newMailbox: Mailbox = {
-        email: data.email,
-        password: data.password,
-        provider: data.provider,
-      };
+      const now = Date.now();
+
+const newMailbox: Mailbox = {
+  email: data.email,
+  password: data.password,
+  provider: data.provider,
+  createdAt: now,
+  expiresAt: now + 60 * 60 * 60 * 1000,
+};
 
       setEmail(data.email);
       setPassword(data.password);
