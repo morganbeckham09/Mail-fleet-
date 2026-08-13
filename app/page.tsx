@@ -548,7 +548,7 @@ const newMailbox: Mailbox = {
                             "flex",
                           gap: "8px",
                         }}
-                      >
+                      
                         <button
                           onClick={() =>
                             selectMailbox(
@@ -577,16 +577,19 @@ const newMailbox: Mailbox = {
                               "left",
                             wordBreak:
                               "break-all",
-                          }}
-                        <button>
-                          {mailbox.email}
-
-          
-
-{mailbox.email === email &&
-  " (Active)"}
-
-                        </button>div>
+                          <button
+  style={{
+    background: mailbox.email === email ? "#111" : "#fff",
+    color: mailbox.email === email ? "#fff" : "#111",
+    border: "1px solid #ddd",
+    borderRadius: "9px",
+    textAlign: "left",
+    wordBreak: "break-all",
+  }}
+>
+  {mailbox.email}
+  {mailbox.email === email && " (Active)"}
+</button>
 {(() => {
   const minutes = Math.max(
     0,
