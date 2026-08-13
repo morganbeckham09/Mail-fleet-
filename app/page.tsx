@@ -577,15 +577,8 @@ const newMailbox: Mailbox = {
                               "left",
                             wordBreak:
                               "break-all",
- <p>
-  Expires in{" "}
-  {Math.max(
-    0,
-    Math.ceil((mailbox.expiresAt - Date.now()) / (60 * 1000))
-  )}{" "}
-  minutes
-</p>
-                        <button
+                            <p>Expires in {Math.max(0, Math.ceil((mailbox.expiresAt - Date.now()) / (60 * 1000)))} minutes</p>
+ <p>  <button
                           onClick={() =>
                             deleteMailbox(
                               index
