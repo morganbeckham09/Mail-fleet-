@@ -579,20 +579,7 @@ const newMailbox: Mailbox = {
                               "break-all",
                           }}
                           
-                          <button
-  style={{
-    background: mailbox.email === email ? "#111" : "#fff",
-    color: mailbox.email === email ? "#fff" : "#111",
-    border: "1px solid #ddd",
-    borderRadius: "9px",
-    textAlign: "left",
-    wordBreak: "break-all",
-  }}
->
-  {mailbox.email}
-  {mailbox.email === email && " (Active)"}
-</button>
-                      
+  
 {(() => {
   const minutes = Math.max(
     0,
@@ -606,7 +593,7 @@ const newMailbox: Mailbox = {
   }`;
 })()}
                       </div>
-                        </button>
+                      
 
                         <button
                           onClick={() =>
