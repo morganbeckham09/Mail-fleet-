@@ -579,6 +579,7 @@ const newMailbox: Mailbox = {
                               "break-all",
                           <button
   style={{
+                            >
     background: mailbox.email === email ? "#111" : "#fff",
     color: mailbox.email === email ? "#fff" : "#111",
     border: "1px solid #ddd",
@@ -590,6 +591,7 @@ const newMailbox: Mailbox = {
   {mailbox.email}
   {mailbox.email === email && " (Active)"}
 </button>
+                      
 {(() => {
   const minutes = Math.max(
     0,
@@ -598,12 +600,11 @@ const newMailbox: Mailbox = {
         (60 * 1000)
     )
   );
-
-  return `Expires in ${minutes} minute${
+   return `Expires in ${minutes} minute${
     minutes === 1 ? "" : "s"
   }`;
 })()}
-
+                      </div>
                         </button>
 
                         <button
