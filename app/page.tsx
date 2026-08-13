@@ -29,6 +29,7 @@ export default function Home() {
   const [provider, setProvider] = useState("");
 
   const [mailboxes, setMailboxes] = useState<Mailbox[]>([]);
+  const [, setCurrentTime] = useState(Date.now());
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedMessage, setSelectedMessage] =
     useState<Message | null>(null);
@@ -95,7 +96,13 @@ useEffect(() => {
     clearInterval(interval);
   };
 }, []);
-  
+  useEffect(() => {
+  const interval = setInterval(() => {
+    setCurrentTime(Date.now());
+  }, 60 * 1000);
+
+  return () => clearInterval(interval);
+}, []);
 
   // Generate temporary email
   async function generateEmail() {
@@ -123,13 +130,14 @@ useEffect(() => {
       }
 
       const now = Date.now();
+const MAILBOX_DURATION = 60 * 60 * 1000;
 
 const newMailbox: Mailbox = {
   email: data.email,
   password: data.password,
   provider: data.provider,
   createdAt: now,
-  expiresAt: now + 60 * 60 * 60 * 1000,
+  expiresAt: now + MAILBOX_DURATION,
 };
 
       setEmail(data.email);
@@ -553,9 +561,26 @@ const newMailbox: Mailbox = {
                         >
                           {mailbox.email}
 
-                          {mailbox.email ===
-                            email &&
-                            "  (Active)"}
+                          {mailbox.email}
+
+{mailbox.email === email &&
+  " (Active)"}
+
+<br />
+{(() => {
+  const minutes = Math.max(
+    0,
+    Math.ceil(
+      (mailbox.expiresAt - Date.now()) /
+        (60 * 1000)
+    )
+  );
+
+  return `Expires in ${minutes} minute${
+    minutes === 1 ? "" : "s"
+  }`;
+})()}
+
                         </button>
 
                         <button
