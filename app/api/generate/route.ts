@@ -86,13 +86,18 @@ export async function GET() {
   "george",
 ];
 
+const randomBytes = crypto.getRandomValues(
+  new Uint32Array(2)
+);
+
 const randomName =
-  names[Math.floor(Math.random() * names.length)];
+  names[randomBytes[0] % names.length];
 
 const randomNumber =
-  Math.floor(100 + Math.random() * 900);
+  String(randomBytes[1] % 900000).padStart(6, "0");
 
-const username = `${randomName}${randomNumber}`;
+const username =
+  `${randomName}${randomNumber}`;
 
 const password =
   "Temp" +
