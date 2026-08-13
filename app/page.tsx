@@ -577,8 +577,7 @@ const newMailbox: Mailbox = {
                               "left",
                             wordBreak:
                               "break-all",
- </p> 
-  <button
+ <p>
   Expires in{" "}
   {Math.max(
     0,
