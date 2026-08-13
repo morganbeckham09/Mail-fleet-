@@ -577,9 +577,10 @@ const newMailbox: Mailbox = {
                               "left",
                             wordBreak:
                               "break-all",
+                          }}
+                          
                           <button
   style={{
-                            >
     background: mailbox.email === email ? "#111" : "#fff",
     color: mailbox.email === email ? "#fff" : "#111",
     border: "1px solid #ddd",
