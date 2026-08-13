@@ -577,22 +577,21 @@ const newMailbox: Mailbox = {
                               "left",
                             wordBreak:
                               "break-all",
-                          }}
-                          
-  
-{(() => {
-  const minutes = Math.max(
-    0,
-    Math.ceil(
-      (mailbox.expiresAt - Date.now()) /
-        (60 * 1000)
-    )
-  );
-   return `Expires in ${minutes} minute${
-    minutes === 1 ? "" : "s"
-  }`;
-})()}
-                      </div>
+                              <div>
+        {(() => {
+          const minutes = Math.max(
+            0,
+            Math.ceil(
+              (mailbox.expiresAt - Date.now()) / (60 * 1000)
+            )
+          );
+
+          return `Expires in ${minutes} minute${
+            minutes === 1 ? "" : "s"
+          }`;
+        })()}
+      </div>
+                    
                       
 
                         <button
