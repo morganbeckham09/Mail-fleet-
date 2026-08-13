@@ -104,7 +104,7 @@ if (
   setMessages([]);
   setSelectedMessage(null);
 }
-
+  };
   cleanup();
 
   const interval = setInterval(
